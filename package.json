@@ -1,5 +1,5 @@
 {
-  "name": "rts-server",
+  "name": "interstellar-server",
   "version": "0.0.1",
   "description": "This is my first attempt at a node based html io game",
   "main": "server.js",
@@ -8,14 +8,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MarkNooneTCD/RTS-IO.git"
+    "url": "git+https://github.com/MarkNooneTCD/Interstellar_Miner"
   },
   "author": "Mark Noone",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/MarkNooneTCD/RTS-IO/issues"
+    "url": "https://github.com/MarkNooneTCD/Interstellar_Miner/issues"
   },
-  "homepage": "https://github.com/MarkNooneTCD/RTS-IO#readme",
+  "homepage": "https://github.com/MarkNooneTCD/Interstellar_Miner#readme",
   "dependencies": {
     "electron": "^1.8.4",
     "express": "^4.16.3",
