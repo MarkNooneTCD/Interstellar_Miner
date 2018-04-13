@@ -7,7 +7,7 @@ var Interstellar = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser
 });
 
 function preload() {
-    Interstellar.load.image('arrow', 'assets/arrow.png');
+    Interstellar.load.image('fighter', 'assets/sprites/fighter.png');
 }
 
 var sprite;
@@ -18,7 +18,7 @@ function create() {
 
     Interstellar.stage.backgroundColor = '#0072bc';
 
-    sprite = Interstellar.add.sprite(400, 300, 'arrow');
+    sprite = Interstellar.add.sprite(400, 300, 'fighter');
     sprite.anchor.setTo(0.5, 0.5);
 
     //  Enable Arcade Physics for the sprite
@@ -30,7 +30,7 @@ function create() {
 }
 
 function update() {
-    sprite.rotation = Interstellar.physics.arcade.moveToPointer(sprite, 60, Interstellar.input.activePointer, 500);
+    sprite.rotation = Interstellar.physics.arcade.angleToPointer(sprite);
 }
 
 function render() {
