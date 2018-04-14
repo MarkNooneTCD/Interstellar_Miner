@@ -5,8 +5,8 @@ const gameWidth = window.innerWidth;
 const gameHeight = window.innerHeight;
 const mapWidth = 5000;
 const mapHeight = 5000;
-const meteorChildSpawnMax = 6;
-const meteorChildSpawnMin = 3;
+const meteorChildSpawnMax = 3;
+const meteorChildSpawnMin = 1;
 const asteroidOffset = 4;
 // Create Groups
 let asteroids;
@@ -95,33 +95,40 @@ function createAsteroids(){
   let tmp = asteroidObject.addChild(Interstellar.make.sprite(15, 45, 'asteroid'));
   tmp.anchor.setTo(0.5, 0.5);
 
-  asteroids.add(asteroidObject);
+  asteroidObject.events.onKilled.add(() => {
+    let rand = Math.floor(Math.random() * meteorChildSpawnMax) + meteorChildSpawnMin
+    for(let i = 0; i <= rand; i++){
+      let angle = Math.random()*Math.PI*2;
+      let rx = Math.cos(angle)*60;
+      let ry = Math.sin(angle)*60;
+      let spawn = Interstellar.add.sprite(800, 300, 'health-100');
+      spawn.anchor.setTo(0, 0);
+      spawn.x += rx;
+      spawn.y += ry;
+      spawn.scale.setTo(.6, .6);
+      Interstellar.physics.arcade.enable(spawn);
+      spawn.body.setCircle(30, -14, 14); // Set body to circle with radius, xOffset
+      let spawnTmp = spawn.addChild(Interstellar.make.sprite(15, 45, 'asteroid'));
+      spawnTmp.anchor.setTo(0.5, 0.5);
 
-  // asteroid.events.onKilled.add(() => {
-  //   progress.kill();
-  //
-  //   // Spawn child meteors
-  //   var tmp = Interstellar.add.group();
-  //   tmp.enableBody = true;
-  //   tmp.physicsBodyType = Phaser.Physics.ARCADE;
-  //   tmp.createMultiple(Math.floor(Math.random() * meteorChildSpawnMax) + meteorChildSpawnMin, 'asteroid');
-  //   tmp.setAll('anchor.x', 0.5);
-  //   tmp.setAll('anchor.y', 0.5);
-  //   tmp.setAll('scale.x', .65);
-  //   tmp.setAll('scale.y', .65);
-  //   tmp.setAll('outOfBoundsKill', true);
-  //   tmp.setAll('checkWorldBounds', true);
-  //
-  //   // Generate random X and Y on the circle around original asteroid.
-  //   tmp.forEach((asteroid)=>{
-  //     let radius = 50;
-  //     let tmpAngle = Math.random()*Math.PI*2;
-  //     asteroid.x = Math.cos(tmpAngle)*radius;
-  //     asteroid.y = Math.sin(tmpAngle)*radius;
-  //   });
-  //   asteroids.add(tmp);
-  //
-  // }, this);
+      spawn.events.onKilled.add(() => {
+        let r = Math.floor(Math.random() * 3)+1;
+        switch(r){
+          case 1:
+            break;
+          case 2:
+            break;
+          case 3:
+            break;
+          default: 
+        }
+      });
+
+      asteroids.add(spawn);
+    }
+  }, this);
+
+  asteroids.add(asteroidObject);
 }
 
 function update() {
@@ -171,7 +178,7 @@ function damageAsteroid(asteroid, damage){
 
 function render() {
     Interstellar.debug.spriteInfo(fighter, 32, 32);
-    // Interstellar.debug.body(asteroids.getChildAt(0));
+    Interstellar.debug.body(asteroids);
 }
 
 function fireBullet () {
