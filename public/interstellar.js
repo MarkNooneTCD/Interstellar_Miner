@@ -1,32 +1,34 @@
+const mvmtSpeed = 5;
+const fireRate = 100;
+const gameWidth = window.innerWidth;
+const gameHeight = window.innerHeight;
+let sprite;
+let nextFire = 0;
+let fireButton;
+let spaceBackground;
 
-var Interstellar = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, '', {
+var Interstellar = new Phaser.Game(gameWidth, gameHeight, Phaser.AUTO, '', {
   preload: preload,
   create: create,
   update: update,
   render: render
 });
 
-const mvmtSpeed = 5;
-const fireRate = 100;
-var sprite;
-var nextFire = 0;
-var fireButton;
-
-
 function preload() {
     Interstellar.load.image('fighter', 'assets/sprites/fighter.png');
     Interstellar.load.image('bullet', 'assets/images/bullet.png');
+    Interstellar.load.image('space', 'assets/images/space.jpg');
 }
 
 function create() {
 
     Interstellar.physics.startSystem(Phaser.Physics.ARCADE);
 
-    Interstellar.stage.backgroundColor = '#0072bc';
+    this.spaceBackground = Interstellar.add.tileSprite(0, 0, Interstellar.width, Interstellar.height, 'space');
 
     sprite = Interstellar.add.sprite(400, 300, 'fighter');
     sprite.anchor.setTo(0.5, 0.5);
-    sprite.scale.setTo(.75, .75);
+    sprite.scale.setTo(.4, .4);
 
     // Bullets Group
     bullets = Interstellar.add.group();
@@ -35,6 +37,8 @@ function create() {
     bullets.createMultiple(30, 'bullet');
     bullets.setAll('anchor.x', 0.5);
     bullets.setAll('anchor.y', 1);
+    bullets.setAll('scale.x', .5);
+    bullets.setAll('scale.y', .5);
     bullets.setAll('outOfBoundsKill', true);
     bullets.setAll('checkWorldBounds', true);
 
@@ -92,7 +96,7 @@ function fireBullet () {
         nextFire = Interstellar.time.now + fireRate;
         //  Grab the first bullet we can from the pool
         bullet = bullets.getFirstExists(false);
-        var length = 60;
+        var length = 30;
         //Add 2.5 in order to get the gun shooting from the middle
         var x = sprite.x+2.5 + (Math.cos(sprite.rotation) * length);
         var y = sprite.y + (Math.sin(sprite.rotation) * length);
@@ -102,7 +106,7 @@ function fireBullet () {
             //  And fire it
             bullet.reset(x, y);
             bullet.rotation = Interstellar.physics.arcade.angleToPointer(bullet);
-            Interstellar.physics.arcade.moveToPointer(bullet, 300);
+            Interstellar.physics.arcade.moveToPointer(bullet, 700);
         }
     }
 
