@@ -5,7 +5,7 @@ const gameWidth = window.innerWidth;
 const gameHeight = window.innerHeight;
 
 // Create sprite variables
-let fighter, asteroid, asteroidOffset = 4;
+let fighter, asteroid, asteroidOffset = 4, progress;
 
 // Create Bullets Behaviour
 let bullets, nextFire = 0, fireButton, bulletDamage = 10;
@@ -26,6 +26,7 @@ function preload() {
     Interstellar.load.image('bullet', 'assets/images/bullet.png');
     Interstellar.load.image('space', 'assets/images/space.jpg');
     Interstellar.load.image('asteroid', 'assets/images/asteroid.png');
+    Interstellar.load.image('progress', 'assets/images/progress/100-bar.png');
 }
 
 function create() {
@@ -44,6 +45,11 @@ function create() {
     asteroid = Interstellar.add.sprite(800, 300, 'asteroid');
     asteroid.anchor.setTo(0.5, 0.5);
     asteroid.scale.setTo(1.3, 1.3);
+
+    progress = Interstellar.add.sprite(800, 200, 'progress');
+    progress.anchor.setTo(0.45, 0);
+    progress.scale.setTo(1.5, 1);
+
 
     // Physics Handling
     Interstellar.physics.enable([fighter, asteroid], Phaser.Physics.ARCADE);
@@ -68,6 +74,8 @@ function create() {
 
 function update() {
     fighter.rotation = Interstellar.physics.arcade.angleToPointer(fighter);
+    progress.x = asteroid.x;
+    progress.y = asteroid.y - 50;
     asteroid.angle += .5;
     movementArrow();
     movementWASD();
