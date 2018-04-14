@@ -37,17 +37,17 @@ function preload() {
     Interstellar.load.image('space', 'assets/images/space.jpg');
     Interstellar.load.image('asteroid', 'assets/images/asteroid.png');
     Interstellar.load.image('gold', 'assets/images/resources/gold.png');
-    Interstellar.load.image('health-100', 'assets/images/health/100-bar.png');
-    Interstellar.load.image('health-90', 'assets/images/health/90-bar.png');
-    Interstellar.load.image('health-80', 'assets/images/health/80-bar.png');
-    Interstellar.load.image('health-70', 'assets/images/health/70-bar.png');
-    Interstellar.load.image('health-60', 'assets/images/health/60-bar.png');
-    Interstellar.load.image('health-50', 'assets/images/health/50-bar.png');
-    Interstellar.load.image('health-40', 'assets/images/health/40-bar.png');
-    Interstellar.load.image('health-30', 'assets/images/health/30-bar.png');
-    Interstellar.load.image('health-20', 'assets/images/health/20-bar.png');
-    Interstellar.load.image('health-10', 'assets/images/health/10-bar.png');
-    Interstellar.load.image('health-0', 'assets/images/health/0-bar.png');
+    Interstellar.load.image('health-100', 'assets/images/bars/100-bar-health.png');
+    Interstellar.load.image('health-90', 'assets/images/bars/90-bar-health.png');
+    Interstellar.load.image('health-80', 'assets/images/bars/80-bar-health.png');
+    Interstellar.load.image('health-70', 'assets/images/bars/70-bar-health.png');
+    Interstellar.load.image('health-60', 'assets/images/bars/60-bar-health.png');
+    Interstellar.load.image('health-50', 'assets/images/bars/50-bar-health.png');
+    Interstellar.load.image('health-40', 'assets/images/bars/40-bar-health.png');
+    Interstellar.load.image('health-30', 'assets/images/bars/30-bar-health.png');
+    Interstellar.load.image('health-20', 'assets/images/bars/20-bar-health.png');
+    Interstellar.load.image('health-10', 'assets/images/bars/10-bar-health.png');
+    Interstellar.load.image('health-0', 'assets/images/health/0-bar-health.png');
 }
 
 function create() {
