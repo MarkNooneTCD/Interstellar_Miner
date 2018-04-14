@@ -5,9 +5,14 @@ const gameWidth = window.innerWidth;
 const gameHeight = window.innerHeight;
 const mapWidth = 5000;
 const mapHeight = 5000;
+const meteorChildSpawnMax = 6;
+const meteorChildSpawnMin = 3;
+const asteroidOffset = 4;
+// Create Groups
+let asteroids;
 
 // Create sprite variables
-let fighter, asteroid, asteroidOffset = 4, progress;
+let fighter ;
 
 // Create Bullets Behaviour
 let bullets, nextFire = 0, fireButton, bulletDamage = 10;
@@ -56,23 +61,10 @@ function create() {
     fighter.anchor.setTo(0.5, 0.5);
     fighter.scale.setTo(.4, .4);
 
-    // Create Asteroid
-    asteroid = Interstellar.add.sprite(800, 300, 'asteroid');
-    asteroid.anchor.setTo(0.5, 0.5);
-    asteroid.scale.setTo(1.3, 1.3);
-
-    progress = Interstellar.add.sprite(0, 0, 'health-100');
-    progress.anchor.setTo(0.45, 0);
-    progress.scale.setTo(1.5, 1);
-
-    asteroid.events.onKilled.add(() => {
-      progress.kill();
-    }, this);
+    createAsteroids();
 
     // Physics Handling
-    Interstellar.physics.enable([fighter, asteroid], Phaser.Physics.ARCADE);
-    asteroid.body.setCircle(30, 2, -1); // Set body to circle with radius, xOffset
-
+    Interstellar.physics.enable(fighter, Phaser.Physics.ARCADE);
     Interstellar.camera.follow(fighter, Phaser.Camera.FOLLOW_LOCKON, 0.1, 0.1);
 
     // Bullets Group
@@ -92,19 +84,57 @@ function create() {
 
 }
 
+function createAsteroids(){
+  asteroids = Interstellar.add.group();
+
+  let asteroidObject = Interstellar.add.sprite(800, 300, 'health-100');
+  asteroidObject.anchor.setTo(0, 0);
+  asteroidObject.scale.setTo(1.3, 1.3);
+  Interstellar.physics.arcade.enable(asteroidObject);
+  asteroidObject.body.setCircle(30, -14, 14); // Set body to circle with radius, xOffset
+  let tmp = asteroidObject.addChild(Interstellar.make.sprite(15, 45, 'asteroid'));
+  tmp.anchor.setTo(0.5, 0.5);
+
+  asteroids.add(asteroidObject);
+
+  // asteroid.events.onKilled.add(() => {
+  //   progress.kill();
+  //
+  //   // Spawn child meteors
+  //   var tmp = Interstellar.add.group();
+  //   tmp.enableBody = true;
+  //   tmp.physicsBodyType = Phaser.Physics.ARCADE;
+  //   tmp.createMultiple(Math.floor(Math.random() * meteorChildSpawnMax) + meteorChildSpawnMin, 'asteroid');
+  //   tmp.setAll('anchor.x', 0.5);
+  //   tmp.setAll('anchor.y', 0.5);
+  //   tmp.setAll('scale.x', .65);
+  //   tmp.setAll('scale.y', .65);
+  //   tmp.setAll('outOfBoundsKill', true);
+  //   tmp.setAll('checkWorldBounds', true);
+  //
+  //   // Generate random X and Y on the circle around original asteroid.
+  //   tmp.forEach((asteroid)=>{
+  //     let radius = 50;
+  //     let tmpAngle = Math.random()*Math.PI*2;
+  //     asteroid.x = Math.cos(tmpAngle)*radius;
+  //     asteroid.y = Math.sin(tmpAngle)*radius;
+  //   });
+  //   asteroids.add(tmp);
+  //
+  // }, this);
+}
+
 function update() {
     fighter.rotation = Interstellar.physics.arcade.angleToPointer(fighter);
-    progress.x = asteroid.x;
-    progress.y = asteroid.y - 50;
-    asteroid.angle += .5;
+    asteroids.forEachAlive((item) => {
+      item.getChildAt(0).angle += .5;
+      Interstellar.physics.arcade.overlap(bullets, item, asteroidCollisionHandler, null, this);
+    });
     movementWASD();
     if (fireButton.isDown)
     {
         fireBullet();
     }
-
-    // Bullet Collision Handlers
-    Interstellar.physics.arcade.overlap(bullets, asteroid, asteroidCollisionHandler, null, this);
 }
 
 function asteroidCollisionHandler (asteroid, bullet) {
@@ -117,30 +147,31 @@ function damageAsteroid(asteroid, damage){
 
   // Change the health bar depending on damage
   if(asteroid.health >= 0.9 && asteroid.health < 1){
-    progress.loadTexture('health-90', 0);
+    asteroid.loadTexture('health-90', 0);
   } else if(asteroid.health >= 0.8 && asteroid.health < .9){
-    progress.loadTexture('health-80', 0);
+    asteroid.loadTexture('health-80', 0);
   } else if(asteroid.health >= 0.7 && asteroid.health < .8){
-    progress.loadTexture('health-70', 0);
+    asteroid.loadTexture('health-70', 0);
   } else if(asteroid.health >= 0.6 && asteroid.health < .7){
-    progress.loadTexture('health-60', 0);
+    asteroid.loadTexture('health-60', 0);
   } else if(asteroid.health >= 0.5 && asteroid.health < .6){
-    progress.loadTexture('health-50', 0);
+    asteroid.loadTexture('health-50', 0);
   } else if(asteroid.health >= 0.4 && asteroid.health < .5){
-    progress.loadTexture('health-40', 0);
+    asteroid.loadTexture('health-40', 0);
   } else if(asteroid.health >= 0.3 && asteroid.health < .4){
-    progress.loadTexture('health-30', 0);
+    asteroid.loadTexture('health-30', 0);
   } else if(asteroid.health >= 0.2 && asteroid.health < .3){
-    progress.loadTexture('health-20', 0);
+    asteroid.loadTexture('health-20', 0);
   } else if(asteroid.health >= 0.1 && asteroid.health < .2){
-    progress.loadTexture('health-10', 0);
+    asteroid.loadTexture('health-10', 0);
   } else if(asteroid.health >= 0 && asteroid.health < .1){
-    progress.loadTexture('health-0', 0);
+    asteroid.loadTexture('health-0', 0);
   }
 }
 
 function render() {
     Interstellar.debug.spriteInfo(fighter, 32, 32);
+    // Interstellar.debug.body(asteroids.getChildAt(0));
 }
 
 function fireBullet () {
