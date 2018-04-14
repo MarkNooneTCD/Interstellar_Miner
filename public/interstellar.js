@@ -3,6 +3,9 @@ const mvmtSpeed = 5;
 const fireRate = 300;
 const gameWidth = window.innerWidth;
 const gameHeight = window.innerHeight;
+const acceleration = .2;
+const slowDown = 0.03;
+const maxSpeed = 5;
 const mapWidth = 5000;
 const mapHeight = 5000;
 const meteorChildSpawnMax = 3;
@@ -12,7 +15,7 @@ const asteroidOffset = 4;
 let asteroids, resources;
 
 // Create sprite variables
-let fighter ;
+let fighter, xSpeed=0, ySpeed=0;
 
 // Create Bullets Behaviour
 let bullets, nextFire = 0, fireButton, bulletDamage = 10;
@@ -153,7 +156,7 @@ function update() {
     resources.forEachAlive((item)=>{
       item.angle += -.5;
     });
-    movementWASD();
+    movementWASDNonAngularVelocity();
     if (fireButton.isDown)
     {
         fireBullet();
@@ -228,22 +231,67 @@ function fireBullet () {
 
 }
 
-function movementWASD(){
+function movementWASDAngularVelocity(){
+  if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.W))
+    {
+        Interstellar.physics.arcade.accelerationFromRotation(fighter.rotation, 200, fighter.body.acceleration);
+    }
+    else
+    {
+        fighter.body.acceleration.set(0);
+    }
+
+    if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.A))
+    {
+        fighter.body.angularVelocity = -200;
+    }
+    else if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.D))
+    {
+        fighter.body.angularVelocity = 200;
+    }
+    else
+    {
+        fighter.body.angularVelocity = 0;
+    }
+}
+
+function movementWASDNonAngularVelocity(){
   if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.A))
   {
-      fighter.x -= mvmtSpeed;
+    if(xSpeed >= 0- maxSpeed){
+      xSpeed-=acceleration;
+    }
+
   }
   else if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.D))
   {
-      fighter.x += mvmtSpeed;
+    if(xSpeed <= maxSpeed){
+      xSpeed+=acceleration;
+    }
+  } else if(!(Interstellar.input.keyboard.isDown(Phaser.Keyboard.A) && Interstellar.input.keyboard.isDown(Phaser.Keyboard.D))){
+    if(xSpeed<0)
+      xSpeed += slowDown;
+    else
+      xSpeed -= slowDown;
   }
 
   if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.W))
   {
-      fighter.y -= mvmtSpeed;
+    if(ySpeed >= 0-maxSpeed){
+      ySpeed-=acceleration;
+    }
   }
   else if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.S))
   {
-      fighter.y += mvmtSpeed;
+    if(ySpeed <= maxSpeed){
+      ySpeed+=acceleration;
+    }
+  } else if(!(Interstellar.input.keyboard.isDown(Phaser.Keyboard.W) && Interstellar.input.keyboard.isDown(Phaser.Keyboard.S))){
+    if(ySpeed<0)
+      ySpeed += slowDown;
+    else
+      ySpeed -= slowDown;
   }
+  fighter.x += xSpeed;
+  fighter.y +=ySpeed;
 }
