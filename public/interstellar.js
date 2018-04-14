@@ -3,6 +3,8 @@ const mvmtSpeed = 5;
 const fireRate = 100;
 const gameWidth = window.innerWidth;
 const gameHeight = window.innerHeight;
+const mapWidth = 5000;
+const mapHeight = 5000;
 
 // Create sprite variables
 let fighter, asteroid, asteroidOffset = 4, progress;
@@ -26,18 +28,31 @@ function preload() {
     Interstellar.load.image('bullet', 'assets/images/bullet.png');
     Interstellar.load.image('space', 'assets/images/space.jpg');
     Interstellar.load.image('asteroid', 'assets/images/asteroid.png');
-    Interstellar.load.image('progress', 'assets/images/progress/100-bar.png');
+    Interstellar.load.image('health-100', 'assets/images/health/100-bar.png');
+    Interstellar.load.image('health-90', 'assets/images/health/90-bar.png');
+    Interstellar.load.image('health-80', 'assets/images/health/80-bar.png');
+    Interstellar.load.image('health-70', 'assets/images/health/70-bar.png');
+    Interstellar.load.image('health-60', 'assets/images/health/60-bar.png');
+    Interstellar.load.image('health-50', 'assets/images/health/50-bar.png');
+    Interstellar.load.image('health-40', 'assets/images/health/40-bar.png');
+    Interstellar.load.image('health-30', 'assets/images/health/30-bar.png');
+    Interstellar.load.image('health-20', 'assets/images/health/20-bar.png');
+    Interstellar.load.image('health-10', 'assets/images/health/10-bar.png');
+    Interstellar.load.image('health-0', 'assets/images/health/0-bar.png');
 }
 
 function create() {
 
     Interstellar.physics.startSystem(Phaser.Physics.ARCADE);
+    // Interstellar.physics.startSystem(Phaser.Physics.P2JS);
     fireButton = Interstellar.input.activePointer.leftButton;
 
-    this.spaceBackground = Interstellar.add.tileSprite(0, 0, Interstellar.width, Interstellar.height, 'space');
+    this.spaceBackground = Interstellar.add.tileSprite(0, 0, mapWidth, mapHeight, 'space');
+    Interstellar.world.setBounds(0, 0, mapWidth, mapHeight);
 
     // Create the fighter ship
     fighter = Interstellar.add.sprite(400, 300, 'fighter');
+    // fighter = Interstellar.add.sprite(Interstellar.world.centerX, Interstellar.world.centerY, 'fighter');
     fighter.anchor.setTo(0.5, 0.5);
     fighter.scale.setTo(.4, .4);
 
@@ -46,14 +61,19 @@ function create() {
     asteroid.anchor.setTo(0.5, 0.5);
     asteroid.scale.setTo(1.3, 1.3);
 
-    progress = Interstellar.add.sprite(800, 200, 'progress');
+    progress = Interstellar.add.sprite(0, 0, 'health-100');
     progress.anchor.setTo(0.45, 0);
     progress.scale.setTo(1.5, 1);
 
+    asteroid.events.onKilled.add(() => {
+      progress.kill();
+    }, this);
 
     // Physics Handling
     Interstellar.physics.enable([fighter, asteroid], Phaser.Physics.ARCADE);
     asteroid.body.setCircle(30, 2, -1); // Set body to circle with radius, xOffset
+
+    Interstellar.camera.follow(fighter, Phaser.Camera.FOLLOW_LOCKON, 0.1, 0.1);
 
     // Bullets Group
     bullets = Interstellar.add.group();
@@ -77,7 +97,6 @@ function update() {
     progress.x = asteroid.x;
     progress.y = asteroid.y - 50;
     asteroid.angle += .5;
-    movementArrow();
     movementWASD();
     if (fireButton.isDown)
     {
@@ -89,56 +108,42 @@ function update() {
 }
 
 function asteroidCollisionHandler (asteroid, bullet) {
-    //  When a bullet hits an alien we kill them both
-    bullet.kill();
+    bullet.kill(); // Destroy The bullet on hit
+    damageAsteroid(asteroid, 0.1);
+}
 
-    //  And create an explosion :)
-    // var explosion = explosions.getFirstExists(false);
-    // explosion.reset(alien.body.x, alien.body.y);
-    // explosion.play('kaboom', 30, false, true);
-    //
-    // if (aliens.countLiving() == 0)
-    // {
-    //     score += 1000;
-    //     scoreText.text = scoreString + score;
-    //
-    //     enemyBullets.callAll('kill',this);
-    //     stateText.text = " You Won, \n Click to restart";
-    //     stateText.visible = true;
-    //
-    //     //the "click to restart" handler
-    //     game.input.onTap.addOnce(restart,this);
-    // }
+function damageAsteroid(asteroid, damage){
+  asteroid.damage(damage);
 
+  // Change the health bar depending on damage
+  if(asteroid.health >= 0.9 && asteroid.health < 1){
+    progress.loadTexture('health-90', 0);
+  } else if(asteroid.health >= 0.8 && asteroid.health < .9){
+    progress.loadTexture('health-80', 0);
+  } else if(asteroid.health >= 0.7 && asteroid.health < .8){
+    progress.loadTexture('health-70', 0);
+  } else if(asteroid.health >= 0.6 && asteroid.health < .7){
+    progress.loadTexture('health-60', 0);
+  } else if(asteroid.health >= 0.5 && asteroid.health < .6){
+    progress.loadTexture('health-50', 0);
+  } else if(asteroid.health >= 0.4 && asteroid.health < .5){
+    progress.loadTexture('health-40', 0);
+  } else if(asteroid.health >= 0.3 && asteroid.health < .4){
+    progress.loadTexture('health-30', 0);
+  } else if(asteroid.health >= 0.2 && asteroid.health < .3){
+    progress.loadTexture('health-20', 0);
+  } else if(asteroid.health >= 0.1 && asteroid.health < .2){
+    progress.loadTexture('health-10', 0);
+  } else if(asteroid.health >= 0 && asteroid.health < .1){
+    progress.loadTexture('health-0', 0);
+  }
 }
 
 function render() {
     Interstellar.debug.spriteInfo(fighter, 32, 32);
 }
 
-function movementArrow(){
-  if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.LEFT))
-  {
-      fighter.x -= mvmtSpeed;
-  }
-  else if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.RIGHT))
-  {
-      fighter.x += mvmtSpeed;
-  }
-
-  if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.UP))
-  {
-      fighter.y -= mvmtSpeed;
-  }
-  else if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.DOWN))
-  {
-      fighter.y += mvmtSpeed;
-  }
-}
-
 function fireBullet () {
-
-
     //  To avoid them being allowed to fire too fast we set a time limit
     if (Interstellar.time.now > nextFire && bullets.countDead())
     {
