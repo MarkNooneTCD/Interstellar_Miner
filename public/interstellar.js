@@ -15,7 +15,7 @@ const asteroidOffset = 4;
 let asteroids, resources;
 
 // Create sprite variables
-let fighter, xSpeed=0, ySpeed=0;
+let fighters, xSpeed=0, ySpeed=0;
 
 // Create Bullets Behaviour
 let bullets, nextFire = 0, fireButton, bulletDamage = 10;
@@ -37,6 +37,7 @@ function preload() {
     Interstellar.load.image('space', 'assets/images/space.jpg');
     Interstellar.load.image('asteroid', 'assets/images/asteroid.png');
     Interstellar.load.image('gold', 'assets/images/resources/gold.png');
+    Interstellar.load.image('shield', 'assets/images/spr_shield.png');
     Interstellar.load.image('health-100', 'assets/images/bars/100-bar-health.png');
     Interstellar.load.image('health-90', 'assets/images/bars/90-bar-health.png');
     Interstellar.load.image('health-80', 'assets/images/bars/80-bar-health.png');
@@ -47,49 +48,75 @@ function preload() {
     Interstellar.load.image('health-30', 'assets/images/bars/30-bar-health.png');
     Interstellar.load.image('health-20', 'assets/images/bars/20-bar-health.png');
     Interstellar.load.image('health-10', 'assets/images/bars/10-bar-health.png');
-    Interstellar.load.image('health-0', 'assets/images/health/0-bar-health.png');
+    Interstellar.load.image('health-0', 'assets/images/bars/0-bar-health.png');
 }
 
 function create() {
 
     Interstellar.physics.startSystem(Phaser.Physics.ARCADE);
     // Interstellar.physics.startSystem(Phaser.Physics.P2JS);
-    fireButton = Interstellar.input.activePointer.leftButton;
-    // resources.physicsBodyType = Phaser.Physics.ARCADE;
-    // resources.enableBody = true;
 
+    // Game Configurations
+    fireButton = Interstellar.input.activePointer.leftButton;
+
+    // World Configurations
     this.spaceBackground = Interstellar.add.tileSprite(0, 0, mapWidth, mapHeight, 'space');
     Interstellar.world.setBounds(0, 0, mapWidth, mapHeight);
 
+    // Fighter Ships
+    fighters = Interstellar.add.group();
+
+    // Sprite Creation
     resources = Interstellar.add.group();
-
-    // Create the fighter ship
-    fighter = Interstellar.add.sprite(400, 300, 'fighter');
-
-    fighter.anchor.setTo(0.5, 0.5);
-    fighter.scale.setTo(.4, .4);
-
     createAsteroids();
+    createBullets();
+    createFighter(400, 300);
+    createFighter(1400, 300);
+    Interstellar.camera.follow(fighters.getChildAt(0).getChildAt(0), Phaser.Camera.FOLLOW_LOCKON, 0.1, 0.1);
 
-    // Physics Handling
-    Interstellar.physics.enable(fighter, Phaser.Physics.ARCADE);
-    Interstellar.camera.follow(fighter, Phaser.Camera.FOLLOW_LOCKON, 0.1, 0.1);
+}
 
-    // Bullets Group
-    bullets = Interstellar.add.group();
-    bullets.enableBody = true;
-    bullets.physicsBodyType = Phaser.Physics.ARCADE;
-    bullets.createMultiple(30, 'bullet');
-    bullets.setAll('anchor.x', 0.5);
-    bullets.setAll('anchor.y', 1);
-    bullets.setAll('scale.x', .5);
-    bullets.setAll('scale.y', .5);
-    bullets.setAll('outOfBoundsKill', true);
-    bullets.setAll('checkWorldBounds', true);
+function createFighter(shipX, shipY){
+  let fighter = Interstellar.add.group();
 
-    //  Tell it we don't want physics to manage the rotation
-    fighter.body.allowRotation = false;
+  // Create the fighter ship
+  let tmpFighter = Interstellar.add.sprite(shipX, shipY, 'fighter');
+  tmpFighter.anchor.setTo(0.5, 0.5);
+  tmpFighter.scale.setTo(.4, .4);
 
+  // Create shield
+  tmpShield = Interstellar.add.sprite(shipX, shipY, 'shield');
+  tmpShield.anchor.setTo(0.5, 0.5);
+  tmpShield.scale.setTo(0.15, 0.15);
+
+
+  // Physics Handling
+  Interstellar.physics.enable(tmpFighter, Phaser.Physics.ARCADE);
+  Interstellar.physics.arcade.enable(tmpShield);
+  tmpShield.body.setCircle(275, 0, 0);
+
+  //  Tell it we don't want physics to manage the rotation
+  tmpFighter.body.allowRotation = false;
+
+  fighter.add(tmpFighter);
+  fighter.add(tmpShield);
+
+  fighters.add(fighter);
+
+}
+
+function createBullets(){
+  // Bullets Group
+  bullets = Interstellar.add.group();
+  bullets.enableBody = true;
+  bullets.physicsBodyType = Phaser.Physics.ARCADE;
+  bullets.createMultiple(30, 'bullet');
+  bullets.setAll('anchor.x', 0.5);
+  bullets.setAll('anchor.y', 1);
+  bullets.setAll('scale.x', .5);
+  bullets.setAll('scale.y', .5);
+  bullets.setAll('outOfBoundsKill', true);
+  bullets.setAll('checkWorldBounds', true);
 }
 
 function createAsteroids(){
@@ -147,20 +174,31 @@ function createAsteroids(){
 }
 
 function update() {
-    fighter.rotation = Interstellar.physics.arcade.angleToPointer(fighter);
+    fighters.forEachAlive((item)=> {
+      let ship = item.getChildAt(0);
+      let shield = item.getChildAt(1);
+      Interstellar.physics.arcade.overlap(ship, resources, resourceHandler, null, this);
+      shield.x = ship.x;
+      shield.y = ship.y;
+    });
+    updatePlayer();
     asteroids.forEachAlive((item) => {
       item.getChildAt(0).angle += .5;
       Interstellar.physics.arcade.overlap(bullets, item, asteroidCollisionHandler, null, this);
     });
-    Interstellar.physics.arcade.overlap(fighter, resources, resourceHandler, null, this);
     resources.forEachAlive((item)=>{
       item.angle += -.5;
     });
-    movementWASDNonAngularVelocity();
-    if (fireButton.isDown)
-    {
-        fireBullet();
-    }
+}
+
+function updatePlayer(){
+  let player = fighters.getChildAt(0).getChildAt(0);
+  player.rotation = Interstellar.physics.arcade.angleToPointer(player);
+  movementWASDNonAngularVelocity(player);
+  if (fireButton.isDown)
+  {
+      fireBullet(player);
+  }
 }
 
 function resourceHandler(fighter, resource) {
@@ -200,15 +238,15 @@ function damageAsteroid(asteroid, damage){
 }
 
 function render() {
-    Interstellar.debug.spriteInfo(fighter, 32, 32);
-    Interstellar.debug.body(asteroids);
+    Interstellar.debug.spriteInfo(fighters.getChildAt(0).getChildAt(0), 32, 32);
+    // Interstellar.debug.body(fighter.getChildAt(1));
     resources.forEachAlive((item)=>{
       Interstellar.debug.body(item);
     });
 
 }
 
-function fireBullet () {
+function fireBullet (ship) {
     //  To avoid them being allowed to fire too fast we set a time limit
     if (Interstellar.time.now > nextFire && bullets.countDead())
     {
@@ -217,8 +255,8 @@ function fireBullet () {
         bullet = bullets.getFirstExists(false);
         var length = 30;
         //Add 2.5 in order to get the gun shooting from the middle
-        var x = fighter.x+2.5 + (Math.cos(fighter.rotation) * length);
-        var y = fighter.y + (Math.sin(fighter.rotation) * length);
+        var x = ship.x+2.5 + (Math.cos(ship.rotation) * length);
+        var y = ship.y + (Math.sin(ship.rotation) * length);
 
         if (bullet)
         {
@@ -231,31 +269,31 @@ function fireBullet () {
 
 }
 
-function movementWASDAngularVelocity(){
+function movementWASDAngularVelocity(ship){
   if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.W))
     {
-        Interstellar.physics.arcade.accelerationFromRotation(fighter.rotation, 200, fighter.body.acceleration);
+        Interstellar.physics.arcade.accelerationFromRotation(ship.rotation, 200, ship.body.acceleration);
     }
     else
     {
-        fighter.body.acceleration.set(0);
+        ship.body.acceleration.set(0);
     }
 
     if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.A))
     {
-        fighter.body.angularVelocity = -200;
+        ship.body.angularVelocity = -200;
     }
     else if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.D))
     {
-        fighter.body.angularVelocity = 200;
+        ship.body.angularVelocity = 200;
     }
     else
     {
-        fighter.body.angularVelocity = 0;
+        ship.body.angularVelocity = 0;
     }
 }
 
-function movementWASDNonAngularVelocity(){
+function movementWASDNonAngularVelocity(ship){
   if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.A))
   {
     if(xSpeed >= 0- maxSpeed){
@@ -292,6 +330,6 @@ function movementWASDNonAngularVelocity(){
     else
       ySpeed -= slowDown;
   }
-  fighter.x += xSpeed;
-  fighter.y +=ySpeed;
+  ship.x += xSpeed;
+  ship.y +=ySpeed;
 }
