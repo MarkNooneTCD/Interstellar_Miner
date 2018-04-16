@@ -15,7 +15,7 @@ const asteroidOffset = 4;
 let asteroids, resources;
 
 // Create sprite variables
-let fighters, xSpeed=0, ySpeed=0;
+let fighters
 
 // Create Bullets Behaviour
 let bullets, nextFire = 0, fireButton, bulletDamage = 10;
@@ -49,6 +49,28 @@ function preload() {
     Interstellar.load.image('health-20', 'assets/images/bars/20-bar-health.png');
     Interstellar.load.image('health-10', 'assets/images/bars/10-bar-health.png');
     Interstellar.load.image('health-0', 'assets/images/bars/0-bar-health.png');
+    Interstellar.load.image('enemy-100', 'assets/images/bars/100-bar-enemy.png');
+    Interstellar.load.image('enemy-90', 'assets/images/bars/90-bar-enemy.png');
+    Interstellar.load.image('enemy-80', 'assets/images/bars/80-bar-enemy.png');
+    Interstellar.load.image('enemy-70', 'assets/images/bars/70-bar-enemy.png');
+    Interstellar.load.image('enemy-60', 'assets/images/bars/60-bar-enemy.png');
+    Interstellar.load.image('enemy-50', 'assets/images/bars/50-bar-enemy.png');
+    Interstellar.load.image('enemy-40', 'assets/images/bars/40-bar-enemy.png');
+    Interstellar.load.image('enemy-30', 'assets/images/bars/30-bar-enemy.png');
+    Interstellar.load.image('enemy-20', 'assets/images/bars/20-bar-enemy.png');
+    Interstellar.load.image('enemy-10', 'assets/images/bars/10-bar-enemy.png');
+    Interstellar.load.image('enemy-0', 'assets/images/bars/0-bar-enemy.png');
+    Interstellar.load.image('shield-100', 'assets/images/bars/100-bar-shield.png');
+    Interstellar.load.image('shield-90', 'assets/images/bars/90-bar-shield.png');
+    Interstellar.load.image('shield-80', 'assets/images/bars/80-bar-shield.png');
+    Interstellar.load.image('shield-70', 'assets/images/bars/70-bar-shield.png');
+    Interstellar.load.image('shield-60', 'assets/images/bars/60-bar-shield.png');
+    Interstellar.load.image('shield-50', 'assets/images/bars/50-bar-shield.png');
+    Interstellar.load.image('shield-40', 'assets/images/bars/40-bar-shield.png');
+    Interstellar.load.image('shield-30', 'assets/images/bars/30-bar-shield.png');
+    Interstellar.load.image('shield-20', 'assets/images/bars/20-bar-shield.png');
+    Interstellar.load.image('shield-10', 'assets/images/bars/10-bar-shield.png');
+    Interstellar.load.image('shield-0', 'assets/images/bars/0-bar-shield.png');
 }
 
 function create() {
@@ -82,12 +104,30 @@ function createFighter(shipX, shipY, isPlayer){
   let tmpFighter = Interstellar.add.sprite(shipX, shipY, 'fighter');
   tmpFighter.anchor.setTo(0.5, 0.5);
   tmpFighter.scale.setTo(.4, .4);
+  tmpFighter.xSpeed=0;
+  tmpFighter.ySpeed=0;
+
+  let tmpHealthBar = Interstellar.add.sprite(shipX, shipY+62, 'health-100');
+  tmpHealthBar.anchor.setTo(0.5, 0.5);
+  tmpHealthBar.scale.setTo(1.5, 1.3);
+  tmpFighter.healthBar = tmpHealthBar;
 
   // Create shield
-  tmpShield = Interstellar.add.sprite(shipX, shipY, 'shield');
+  let tmpShield = Interstellar.add.sprite(shipX, shipY, 'shield');
   tmpShield.anchor.setTo(0.5, 0.5);
   tmpShield.scale.setTo(0.15, 0.15);
+  tmpShield.associatedShipSprite = tmpFighter;
+  tmpShield.lastCollision = null;
+  tmpShield.timeout = null;
+  tmpShield.events.onKilled.add(() => {
+    console.log("Shield dead.");
+  });
   tmpShield.alpha = 0;
+
+  let tmpShieldBar = Interstellar.add.sprite(shipX, shipY+50, 'shield-100');
+  tmpShieldBar.anchor.setTo(0.5, 0.5);
+  tmpShieldBar.scale.setTo(1.5, 1.3);
+  tmpShield.shieldBar = tmpShieldBar;
 
 
   // Physics Handling
@@ -102,9 +142,17 @@ function createFighter(shipX, shipY, isPlayer){
 
   //  Tell it we don't want physics to manage the rotation
   tmpFighter.body.allowRotation = false;
+  tmpFighter.events.onKilled.add(()=>{
+    tmpShield.kill();
+    tmpHealthBar.kill();
+    tmpShieldBar.kill();
+    fighters.remove(fighter);
+  });
 
   fighter.add(tmpFighter);
   fighter.add(tmpShield);
+  fighter.add(tmpHealthBar);
+  fighter.add(tmpShieldBar);
 
   fighters.add(fighter);
 
@@ -118,6 +166,7 @@ function createBullets(){
   bullets.createMultiple(30, 'bullet');
   bullets.forEach((item)=> {
     item.sourceShield = null;
+    item.sourceShip = null;
     item.anchor.x = 0.5;
     item.anchor.y = 1;
     item.scale.x = .5;
@@ -187,12 +236,20 @@ function update() {
     fighters.forEachAlive((item)=> {
         let ship = item.getChildAt(0);
         let shield = item.getChildAt(1);
+        let health = item.getChildAt(2);
+        let shieldBar = item.getChildAt(3);
         if(i === 0)
           updatePlayer(ship, shield);
         Interstellar.physics.arcade.overlap(shield, bullets, shieldBulletHandler, null, this);
         Interstellar.physics.arcade.overlap(ship, resources, resourceHandler, null, this);
+        Interstellar.physics.arcade.overlap(asteroids, shield, shieldAsteroidCollision, null, this);
+        Interstellar.physics.arcade.overlap(bullets, ship, shipShotHandler, null, this);
         shield.x = ship.x;
         shield.y = ship.y;
+        health.x = ship.x;
+        health.y = ship.y +62;
+        shieldBar.x = ship.x;
+        shieldBar.y = ship.y +50;
         i++;
     });
 
@@ -205,6 +262,35 @@ function update() {
     });
 }
 
+//TODO: Needs some serious work
+function shieldAsteroidCollision(shield, asteroid){
+  if(!(shield.lastCollison === asteroid)){
+    console.log("Inside");
+    let ship = shield.associatedShipSprite;
+    if(ship.xSpeed < 0.1){
+      ship.xSpeed =0;
+    } else{
+      ship.xSpeed = -ship.xSpeed*0.5;
+    }
+    if(ship.ySpeed < 0.1){
+      ship.ySpeed =0;
+    } else{
+      ship.ySpeed = -ship.ySpeed*0.5;
+    }
+
+    damageAsteroid(asteroid, .2);
+    // damageShield(shield, .5);
+    shield.lastCollison = asteroid;
+    setTimeout(()=>{
+      shield.lastCollison = null;
+    }, 200);
+  } else {
+    console.log("out");
+    return;
+  }
+
+}
+
 function updatePlayer(playerShip, playerShield){
   playerShip.rotation = Interstellar.physics.arcade.angleToPointer(playerShip);
   movementWASDNonAngularVelocity(playerShip);
@@ -213,21 +299,76 @@ function updatePlayer(playerShip, playerShield){
       fireBullet(playerShip, playerShield);
   }
 }
+function shipShotHandler(ship, bullet){
+  if(bullet.sourceShip === ship)
+    return;
+  bullet.kill();
+  damageShip(ship, 0.25);
+}
 
 function shieldBulletHandler(shield, bullet){
   if(bullet.sourceShield === shield)
     return;
   bullet.kill();
   damageShield(shield, 0.15);
-  shield.alpha = 100;
-  setTimeout(()=>{
-    shield.alpha = 0;
-  }, 80);
+}
+
+function damageShip(ship, value){
+  ship.damage(value);
+  // Change the health bar depending on damage
+  if(ship.health >= 0.9 && ship.health < 1){
+    ship.healthBar.loadTexture('health-90', 0);
+  } else if(ship.health >= 0.8 && ship.health < .9){
+    ship.healthBar.loadTexture('health-80', 0);
+  } else if(ship.health >= 0.7 && ship.health < .8){
+    ship.healthBar.loadTexture('health-70', 0);
+  } else if(ship.health >= 0.6 && ship.health < .7){
+    ship.healthBar.loadTexture('health-60', 0);
+  } else if(ship.health >= 0.5 && ship.health < .6){
+    ship.healthBar.loadTexture('health-50', 0);
+  } else if(ship.health >= 0.4 && ship.health < .5){
+    ship.healthBar.loadTexture('health-40', 0);
+  } else if(ship.health >= 0.3 && ship.health < .4){
+    ship.healthBar.loadTexture('health-30', 0);
+  } else if(ship.health >= 0.2 && ship.health < .3){
+    ship.healthBar.loadTexture('health-20', 0);
+  } else if(ship.health >= 0.1 && ship.health < .2){
+    ship.healthBar.loadTexture('health-10', 0);
+  } else if(ship.health >= 0 && ship.health < .1){
+    ship.healthBar.loadTexture('health-0', 0);
+  }
 }
 
 function damageShield(shield, value) {
   shield.damage(value);
+  shield.alpha = 100;
+  clearTimeout(shield.timeout);
+  shield.timeout = setTimeout(()=>{
+    shield.alpha = 0;
+  }, 80);
 
+  // Change the shield bar depending on damage
+  if(shield.health >= 0.9 && shield.health < 1){
+    shield.shieldBar.loadTexture('shield-90', 0);
+  } else if(shield.health >= 0.8 && shield.health < .9){
+    shield.shieldBar.loadTexture('shield-80', 0);
+  } else if(shield.health >= 0.7 && shield.health < .8){
+    shield.shieldBar.loadTexture('shield-70', 0);
+  } else if(shield.health >= 0.6 && shield.health < .7){
+    shield.shieldBar.loadTexture('shield-60', 0);
+  } else if(shield.health >= 0.5 && shield.health < .6){
+    shield.shieldBar.loadTexture('shield-50', 0);
+  } else if(shield.health >= 0.4 && shield.health < .5){
+    shield.shieldBar.loadTexture('shield-40', 0);
+  } else if(shield.health >= 0.3 && shield.health < .4){
+    shield.shieldBar.loadTexture('shield-30', 0);
+  } else if(shield.health >= 0.2 && shield.health < .3){
+    shield.shieldBar.loadTexture('shield-20', 0);
+  } else if(shield.health >= 0.1 && shield.health < .2){
+    shield.shieldBar.loadTexture('shield-10', 0);
+  } else if(shield.health >= 0 && shield.health < .1){
+    shield.shieldBar.loadTexture('shield-0', 0);
+  }
 }
 
 function resourceHandler(fighter, resource) {
@@ -268,7 +409,7 @@ function damageAsteroid(asteroid, damage){
 
 function render() {
     Interstellar.debug.spriteInfo(fighters.getChildAt(0).getChildAt(0), 32, 32);
-    // Interstellar.debug.body(fighter.getChildAt(1));
+    // Interstellar.debug.body(asteroids.getChildAt(0));
     resources.forEachAlive((item)=>{
       Interstellar.debug.body(item);
     });
@@ -292,6 +433,7 @@ function fireBullet (ship, shield) {
             //  And fire it
             bullet.reset(x, y);
             bullet.sourceShield = shield;
+            bullet.sourceShip = ship;
             bullet.rotation = Interstellar.physics.arcade.angleToPointer(bullet);
             Interstellar.physics.arcade.moveToPointer(bullet, 700);
         }
@@ -326,40 +468,40 @@ function movementWASDAngularVelocity(ship){
 function movementWASDNonAngularVelocity(ship){
   if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.A))
   {
-    if(xSpeed >= 0- maxSpeed){
-      xSpeed-=acceleration;
+    if(ship.xSpeed >= 0- maxSpeed){
+      ship.xSpeed-=acceleration;
     }
 
   }
   else if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.D))
   {
-    if(xSpeed <= maxSpeed){
-      xSpeed+=acceleration;
+    if(ship.xSpeed <= maxSpeed){
+      ship.xSpeed+=acceleration;
     }
   } else if(!(Interstellar.input.keyboard.isDown(Phaser.Keyboard.A) && Interstellar.input.keyboard.isDown(Phaser.Keyboard.D))){
-    if(xSpeed<0)
-      xSpeed += slowDown;
+    if(ship.xSpeed<0)
+      ship.xSpeed += slowDown;
     else
-      xSpeed -= slowDown;
+      ship.xSpeed -= slowDown;
   }
 
   if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.W))
   {
-    if(ySpeed >= 0-maxSpeed){
-      ySpeed-=acceleration;
+    if(ship.ySpeed >= 0-maxSpeed){
+      ship.ySpeed-=acceleration;
     }
   }
   else if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.S))
   {
-    if(ySpeed <= maxSpeed){
-      ySpeed+=acceleration;
+    if(ship.ySpeed <= maxSpeed){
+      ship.ySpeed+=acceleration;
     }
   } else if(!(Interstellar.input.keyboard.isDown(Phaser.Keyboard.W) && Interstellar.input.keyboard.isDown(Phaser.Keyboard.S))){
-    if(ySpeed<0)
-      ySpeed += slowDown;
+    if(ship.ySpeed<0)
+      ship.ySpeed += slowDown;
     else
-      ySpeed -= slowDown;
+      ship.ySpeed -= slowDown;
   }
-  ship.x += xSpeed;
-  ship.y +=ySpeed;
+  ship.x += ship.xSpeed;
+  ship.y += ship.ySpeed;
 }
