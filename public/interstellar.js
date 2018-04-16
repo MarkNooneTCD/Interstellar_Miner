@@ -70,13 +70,12 @@ function create() {
     resources = Interstellar.add.group();
     createAsteroids();
     createBullets();
-    createFighter(400, 300);
-    createFighter(1400, 300);
-    Interstellar.camera.follow(fighters.getChildAt(0).getChildAt(0), Phaser.Camera.FOLLOW_LOCKON, 0.1, 0.1);
+    createFighter(400, 300, true);
+    createFighter(1400, 300, false);
 
 }
 
-function createFighter(shipX, shipY){
+function createFighter(shipX, shipY, isPlayer){
   let fighter = Interstellar.add.group();
 
   // Create the fighter ship
@@ -88,11 +87,17 @@ function createFighter(shipX, shipY){
   tmpShield = Interstellar.add.sprite(shipX, shipY, 'shield');
   tmpShield.anchor.setTo(0.5, 0.5);
   tmpShield.scale.setTo(0.15, 0.15);
+  tmpShield.alpha = 0;
 
 
   // Physics Handling
   Interstellar.physics.enable(tmpFighter, Phaser.Physics.ARCADE);
   Interstellar.physics.arcade.enable(tmpShield);
+
+  // Camera follow only player
+  if(isPlayer)
+    Interstellar.camera.follow(tmpFighter, Phaser.Camera.FOLLOW_LOCKON, 0.1, 0.1);
+
   tmpShield.body.setCircle(275, 0, 0);
 
   //  Tell it we don't want physics to manage the rotation
@@ -111,12 +116,16 @@ function createBullets(){
   bullets.enableBody = true;
   bullets.physicsBodyType = Phaser.Physics.ARCADE;
   bullets.createMultiple(30, 'bullet');
-  bullets.setAll('anchor.x', 0.5);
-  bullets.setAll('anchor.y', 1);
-  bullets.setAll('scale.x', .5);
-  bullets.setAll('scale.y', .5);
-  bullets.setAll('outOfBoundsKill', true);
-  bullets.setAll('checkWorldBounds', true);
+  bullets.forEach((item)=> {
+    item.sourceShield = null;
+    item.anchor.x = 0.5;
+    item.anchor.y = 1;
+    item.scale.x = .5;
+    item.scale.y = .5;
+    item.outOfBoundsKill = true;
+    item.checkWorldBounds = true;
+  });
+
 }
 
 function createAsteroids(){
@@ -174,14 +183,19 @@ function createAsteroids(){
 }
 
 function update() {
+    let i = 0;
     fighters.forEachAlive((item)=> {
-      let ship = item.getChildAt(0);
-      let shield = item.getChildAt(1);
-      Interstellar.physics.arcade.overlap(ship, resources, resourceHandler, null, this);
-      shield.x = ship.x;
-      shield.y = ship.y;
+        let ship = item.getChildAt(0);
+        let shield = item.getChildAt(1);
+        if(i === 0)
+          updatePlayer(ship, shield);
+        Interstellar.physics.arcade.overlap(shield, bullets, shieldBulletHandler, null, this);
+        Interstellar.physics.arcade.overlap(ship, resources, resourceHandler, null, this);
+        shield.x = ship.x;
+        shield.y = ship.y;
+        i++;
     });
-    updatePlayer();
+
     asteroids.forEachAlive((item) => {
       item.getChildAt(0).angle += .5;
       Interstellar.physics.arcade.overlap(bullets, item, asteroidCollisionHandler, null, this);
@@ -191,14 +205,29 @@ function update() {
     });
 }
 
-function updatePlayer(){
-  let player = fighters.getChildAt(0).getChildAt(0);
-  player.rotation = Interstellar.physics.arcade.angleToPointer(player);
-  movementWASDNonAngularVelocity(player);
+function updatePlayer(playerShip, playerShield){
+  playerShip.rotation = Interstellar.physics.arcade.angleToPointer(playerShip);
+  movementWASDNonAngularVelocity(playerShip);
   if (fireButton.isDown)
   {
-      fireBullet(player);
+      fireBullet(playerShip, playerShield);
   }
+}
+
+function shieldBulletHandler(shield, bullet){
+  if(bullet.sourceShield === shield)
+    return;
+  bullet.kill();
+  damageShield(shield, 0.15);
+  shield.alpha = 100;
+  setTimeout(()=>{
+    shield.alpha = 0;
+  }, 80);
+}
+
+function damageShield(shield, value) {
+  shield.damage(value);
+
 }
 
 function resourceHandler(fighter, resource) {
@@ -246,7 +275,7 @@ function render() {
 
 }
 
-function fireBullet (ship) {
+function fireBullet (ship, shield) {
     //  To avoid them being allowed to fire too fast we set a time limit
     if (Interstellar.time.now > nextFire && bullets.countDead())
     {
@@ -262,6 +291,7 @@ function fireBullet (ship) {
         {
             //  And fire it
             bullet.reset(x, y);
+            bullet.sourceShield = shield;
             bullet.rotation = Interstellar.physics.arcade.angleToPointer(bullet);
             Interstellar.physics.arcade.moveToPointer(bullet, 700);
         }
