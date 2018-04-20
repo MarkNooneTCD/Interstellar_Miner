@@ -13,6 +13,7 @@ const meteorChildSpawnMin = 1;
 const asteroidOffset = 4;
 // Create Groups
 let asteroids, resources;
+let shields = [], ships = [];
 
 // Create sprite variables
 let fighters
@@ -106,6 +107,7 @@ function createFighter(shipX, shipY, isPlayer){
   tmpFighter.scale.setTo(.4, .4);
   tmpFighter.xSpeed=0;
   tmpFighter.ySpeed=0;
+  tmpFighter.disableCollisionsFor = [];
 
   let tmpHealthBar = Interstellar.add.sprite(shipX, shipY+62, 'health-100');
   tmpHealthBar.anchor.setTo(0.5, 0.5);
@@ -119,6 +121,7 @@ function createFighter(shipX, shipY, isPlayer){
   tmpShield.associatedShipSprite = tmpFighter;
   tmpShield.lastCollision = null;
   tmpShield.timeout = null;
+  tmpShield.disableCollisionsFor = [];
   tmpShield.events.onKilled.add(() => {
     console.log("Shield dead.");
   });
@@ -149,11 +152,17 @@ function createFighter(shipX, shipY, isPlayer){
     fighters.remove(fighter);
   });
 
+  // Add to physics groups
+  shields.push(tmpShield);
+  ships.push(tmpFighter);
+
+  // Create a single fighter object
   fighter.add(tmpFighter);
   fighter.add(tmpShield);
   fighter.add(tmpHealthBar);
   fighter.add(tmpShieldBar);
 
+  // Push to all fighter objects
   fighters.add(fighter);
 
 }
@@ -174,7 +183,6 @@ function createBullets(){
     item.outOfBoundsKill = true;
     item.checkWorldBounds = true;
   });
-
 }
 
 function createAsteroids(){
@@ -253,6 +261,14 @@ function update() {
         i++;
     });
 
+    Interstellar.physics.arcade.overlap(shields, shields, shieldtoShieldCollisionHandler, collisionProcessCheck, this);
+    Interstellar.physics.arcade.overlap(shields, ships, shieldToShipCollisionHandler, (shield1, ship1) => {
+      if(shield1.associatedShipSprite === ship1)
+        return false;
+      return collisionProcessCheck(shield1, ship1);
+    }, this);
+    Interstellar.physics.arcade.overlap(ships, ships, shipToShipCollisionHandler, collisionProcessCheck, this);
+
     asteroids.forEachAlive((item) => {
       item.getChildAt(0).angle += .5;
       Interstellar.physics.arcade.overlap(bullets, item, asteroidCollisionHandler, null, this);
@@ -261,6 +277,84 @@ function update() {
       item.angle += -.5;
     });
 }
+
+function collisionProcessCheck(obj1, obj2){
+  if (obj1.disableCollisionsFor.includes(obj2) && obj2.disableCollisionsFor.includes(obj1))
+    return false;
+  else
+    return true;
+}
+
+function shieldtoShieldCollisionHandler(shield1, shield2){
+  damageShield(shield1, .2);
+  damageShield(shield2, .2);
+  let ship1 = shield1.associatedShipSprite;
+  let ship2 = shield2.associatedShipSprite;
+  ship1.xSpeed = -ship1.xSpeed;
+  ship1.ySpeed = -ship1.ySpeed;
+  ship2.xSpeed = -ship2.xSpeed;
+  ship2.ySpeed = -ship2.ySpeed;
+  // console.log("Shield => Shield");
+  shield1.disableCollisionsFor.push(shield2);
+  shield2.disableCollisionsFor.push(shield1);
+  setTimeout(() => {
+    let index = shield1.disableCollisionsFor.indexOf(shield2);
+    if (index > -1) {
+      shield1.disableCollisionsFor.splice(index, 1);
+    }
+    index = shield2.disableCollisionsFor.indexOf(shield1);
+    if (index > -1) {
+      shield2.disableCollisionsFor.splice(index, 1);
+    }
+  }, 100);
+}
+
+function shieldToShipCollisionHandler(shield1, ship1){
+  damageShield(shield1, .1);
+  damageShip(ship1, .2)
+  let ship2 = shield1.associatedShipSprite;
+  ship1.xSpeed = -ship1.xSpeed;
+  ship1.ySpeed = -ship1.ySpeed;
+  ship2.xSpeed = -ship2.xSpeed;
+  ship2.ySpeed = -ship2.ySpeed;
+  shield1.disableCollisionsFor.push(ship1);
+  ship1.disableCollisionsFor.push(shield1);
+  setTimeout(() => {
+    let index = shield1.disableCollisionsFor.indexOf(ship1);
+    if (index > -1) {
+      shield1.disableCollisionsFor.splice(index, 1);
+    }
+    index = ship1.disableCollisionsFor.indexOf(shield1);
+    if (index > -1) {
+      ship1.disableCollisionsFor.splice(index, 1);
+    }
+  }, 100);
+  // console.log("Shield => Ship");
+}
+
+function shipToShipCollisionHandler(ship1, ship2){
+  damageShip(ship1, .3);
+  damageShip(ship2, .3);
+  ship1.xSpeed = -ship1.xSpeed;
+  ship1.ySpeed = -ship1.ySpeed;
+  ship2.xSpeed = -ship2.xSpeed;
+  ship2.ySpeed = -ship2.ySpeed;
+  console.log("Shield => Shield");
+  ship1.disableCollisionsFor.push(ship2);
+  ship2.disableCollisionsFor.push(ship1);
+  setTimeout(() => {
+    let index = ship1.disableCollisionsFor.indexOf(ship2);
+    if (index > -1) {
+      ship1.disableCollisionsFor.splice(index, 1);
+    }
+    index = ship2.disableCollisionsFor.indexOf(ship1);
+    if (index > -1) {
+      ship2.disableCollisionsFor.splice(index, 1);
+    }
+  }, 100);
+  console.log("Ship => Ship");
+}
+
 
 //TODO: Needs some serious work
 function shieldAsteroidCollision(shield, asteroid){
