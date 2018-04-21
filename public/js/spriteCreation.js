@@ -72,7 +72,7 @@ function createFighter(id, shipX, shipY, isPlayer, faction){
     Interstellar.playerUpdater = setInterval(()=>{
       // console.log("Sending");
       Client.sendCoord(tmpFighter.x, tmpFighter.y);
-    }, 800);
+    }, 15);
   }
 
   // Push to all fighter objects

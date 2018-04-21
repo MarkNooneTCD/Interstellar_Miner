@@ -19,7 +19,7 @@ function createClient(){
   });
 
   Client.sendCoord = (x, y) => {
-    console.log("Coording: "+x+" "+y);
+    // console.log("Coording: "+x+" "+y);
     Client.socket.emit('coord',{dataX:x,dataY:y});
   };
 
@@ -35,7 +35,7 @@ function createClient(){
   };
 
   Client.socket.on('move',function(data){
-    console.log("Moving: "+data.id+" "+data.username+" "+data.x+" "+data.y);
+    // console.log("Moving: "+data.id+" "+data.username+" "+data.x+" "+data.y);
        Interstellar.movePlayer(data.id, data.x, data.y);
   });
 }
