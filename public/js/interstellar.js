@@ -103,6 +103,31 @@ function create() {
 
     Interstellar.physics.startSystem(Phaser.Physics.ARCADE);
     // Interstellar.physics.startSystem(Phaser.Physics.P2JS);
+    Interstellar.players = [];
+    Interstellar.addNewPlayer = (id, username, x, y) => {
+      if(username === Interstellar.playerUsername){
+        Interstellar.playerId = id;
+        createFighter(id, x, y, true, 1);
+      }
+      else
+        createFighter(id, x, y, false, 2);
+    };
+
+
+    Interstellar.remove = (id) => {
+      fighters.forEach((item) => {
+        if(item.id === id){
+          item.getChildAt(0).kill();
+        }
+      });
+    };
+
+    Interstellar.movePlayer = (id, x, y) => {
+      // players[id].x = x;
+      // players[id].y = y;
+    };
+
+    Client.askNewPlayer();
 
     // Game Configurations
     fireButton = Interstellar.input.activePointer.leftButton;
@@ -118,10 +143,13 @@ function create() {
     resources = Interstellar.add.group();
     createAsteroids();
     createBullets();
-    createFighter(400, 800, true, 1);
-    createFighter(1400, 300, false, 2);
+    // createFighter(400, 800, true, 1);
+    // createFighter(1400, 300, false, 2);
     createMiniMap();
     createPlanets();
+    Interstellar.playerUpdater = setInterval(()=>{
+      Client.sendCoord();
+    }, 100);
 }
 
 function createPlanets(){
@@ -158,7 +186,7 @@ function update() {
         let shield = item.getChildAt(1);
         let health = item.getChildAt(2);
         let shieldBar = item.getChildAt(3);
-        if(i === 0)
+        if(item.id === Interstellar.playerId)
           updatePlayer(ship, shield);
         Interstellar.physics.arcade.overlap(shield, bullets, shieldBulletHandler, null, this);
         Interstellar.physics.arcade.overlap(ship, resources, resourceHandler, null, this);
@@ -252,7 +280,8 @@ function updatePlayer(playerShip, playerShield){
 
 
 function render() {
-    Interstellar.debug.spriteInfo(fighters.getChildAt(0).getChildAt(0), 32, 32);
+    if(Interstellar.playerId)
+       Interstellar.debug.spriteInfo(players[Interstellar.playerId], 32, 32);
     // Interstellar.debug.spriteBounds(miniMap);
     // Interstellar.debug.body(planets.getChildAt(0));
     resources.forEachAlive((item)=>{

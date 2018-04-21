@@ -17,10 +17,8 @@
   },
   "homepage": "https://github.com/MarkNooneTCD/Interstellar_Miner#readme",
   "dependencies": {
-    "electron": "^1.8.4",
     "express": "^4.16.3",
     "path": "^0.12.7",
-    "phaser": "^3.4.0",
     "socket.io": "^2.1.0"
   }
 }

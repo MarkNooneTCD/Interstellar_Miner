@@ -1,4 +1,4 @@
-function createFighter(shipX, shipY, isPlayer, faction){
+function createFighter(id, shipX, shipY, isPlayer, faction){
   let fighter = Interstellar.add.group();
 
   // Create the fighter ship
@@ -64,6 +64,8 @@ function createFighter(shipX, shipY, isPlayer, faction){
   fighter.add(tmpShield);
   fighter.add(tmpHealthBar);
   fighter.add(tmpShieldBar);
+  fighter.id = id;
+  Interstellar.players[id] = tmpFighter;
 
   // Push to all fighter objects
   fighters.add(fighter);
