@@ -22,8 +22,8 @@ function createClient(){
   };
 
   Client.socket.on('allplayers',function(data){
-      console.log("All Player Data: "+data.id+" "+data.username);
       for(var i = 0; i < data.length; i++){
+        console.log("All Player Data: "+data[i].id+" "+data[i].username);
           Interstellar.addNewPlayer(data[i].id, data[i].username, data[i].x, data[i].y);
       }
   });
