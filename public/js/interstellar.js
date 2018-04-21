@@ -213,8 +213,8 @@ function update() {
     fighters.forEachAlive((item)=> {
         if(item.id !== Interstellar.playerId){
           let ship = item.getChildAt(0);
-          ship.x = Interstellar.player[item.id.x];
-          ship.y = Interstellar.player[item.id.y];
+          ship.x = Interstellar.player[item.id].x;
+          ship.y = Interstellar.player[item.id].y;
           let shield = item.getChildAt(1);
           let health = item.getChildAt(2);
           let shieldBar = item.getChildAt(3);
