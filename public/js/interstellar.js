@@ -158,6 +158,7 @@ function create() {
     createClient();
     Client.askNewPlayer();
     Interstellar.playerUpdater = setInterval(()=>{
+      console.log("Sending");
       Client.sendCoord();
     }, 80);
 

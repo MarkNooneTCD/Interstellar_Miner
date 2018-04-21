@@ -9,6 +9,7 @@ function createClient(){
   };
 
   Client.socket.on('newplayer',function(data){
+      console.log("New Player Data: "+data);
       Interstellar.addNewPlayer(data.id,data.x,data.y);
   });
 
@@ -21,7 +22,7 @@ function createClient(){
   };
 
   Client.socket.on('allplayers',function(data){
-      // console.log(data);
+      console.log("All Player Data: "+data);
       for(var i = 0; i < data.length; i++){
           Interstellar.addNewPlayer(data[i].id, data[i].username, data[i].x, data[i].y);
       }
