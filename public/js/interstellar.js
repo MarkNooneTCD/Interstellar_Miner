@@ -214,15 +214,15 @@ function claimingPlanet(claim, ship){
   claim.parentObj.faction = ship.faction;
   if(claim.claimPercent<360)
     claim.claimPercent += 0.2;
-  updateArc(claim, true);
+  updateArc(claim, 0xe74c3c, true);
   if(claim.claimPercent<360 && claim.claimPercent>0){
     claim.claimTimer = window.setTimeout(() => {
       claim.regenTimer = setInterval(()=>{
         claim.claimPercent -= .1;
-        updateArc(claim, true);
+        updateArc(claim, 0xe74c3c, true);
         if(claim.claimPercent <= 0){
           claim.claimPercent = 0;
-          updateArc(claim, false);
+          updateArc(claim, 0xe74c3c, false);
           clearInterval(claim.regenTimer);
         }
       }, 20);
@@ -231,12 +231,12 @@ function claimingPlanet(claim, ship){
   }
 }
 
-function updateArc(claimZone, hasArc){
+function updateArc(claimZone, factionColour, hasArc){
   claimZone.clear();
   claimZone.lineStyle(1, 0xFFFFFF, 0.9);
   claimZone.drawEllipse(0, 0, 250, 250);
   if(hasArc){
-    claimZone.lineStyle(8, 0xe74c3c);
+    claimZone.lineStyle(8, factionColour);
     claimZone.arc(0, 0, 250, Interstellar.math.degToRad(0), Interstellar.math.degToRad(claimZone.claimPercent), false);
   }
 }
