@@ -65,7 +65,7 @@ function createFighter(id, shipX, shipY, isPlayer, faction){
   fighter.add(tmpHealthBar);
   fighter.add(tmpShieldBar);
   fighter.id = id;
-  Interstellar.players[id] = tmpFighter;
+  Interstellar.players[id] = {x:shipX, y:shipY};
 
   // Push to all fighter objects
   fighters.add(fighter);

@@ -128,8 +128,11 @@ function create() {
     };
 
     Interstellar.movePlayer = (id, x, y) => {
-      players[id].x = x;
-      players[id].y = y;
+      if(Interstellar.players){
+        // console.log(Interstellar.players);
+        // Interstellar.players[id].x = x;
+        // Interstellar.players[id].y = y;
+      }
     };
 
     Client.askNewPlayer();
@@ -154,7 +157,7 @@ function create() {
     createPlanets();
     Interstellar.playerUpdater = setInterval(()=>{
       Client.sendCoord();
-    }, 100);
+    }, 2000);
 }
 
 function createPlanets(){
@@ -185,25 +188,48 @@ function createPlanets(){
 }
 
 function update() {
-    let i = 0;
-    fighters.forEachAlive((item)=> {
+    // let i = 0;
+    fighters.forEachAlive((item)=>{
+      if(item.id === Interstellar.playerId){
         let ship = item.getChildAt(0);
         let shield = item.getChildAt(1);
         let health = item.getChildAt(2);
         let shieldBar = item.getChildAt(3);
-        if(item.id === Interstellar.playerId)
-          updatePlayer(ship, shield);
         Interstellar.physics.arcade.overlap(shield, bullets, shieldBulletHandler, null, this);
         Interstellar.physics.arcade.overlap(ship, resources, resourceHandler, null, this);
         Interstellar.physics.arcade.overlap(asteroids, shield, shieldAsteroidCollision, null, this);
         Interstellar.physics.arcade.overlap(bullets, ship, shipShotHandler, null, this);
+        updatePlayer(ship, shield);
         shield.x = ship.x;
         shield.y = ship.y;
         health.x = ship.x;
         health.y = ship.y +62;
         shieldBar.x = ship.x;
         shieldBar.y = ship.y +50;
-        i++;
+        // i++;
+      }
+    });
+
+    fighters.forEachAlive((item)=> {
+        if(item.id !== Interstellar.playerId){
+          let ship = item.getChildAt(0);
+          ship.x = Interstellar.player[item.id.x];
+          ship.y = Interstellar.player[item.id.y];
+          let shield = item.getChildAt(1);
+          let health = item.getChildAt(2);
+          let shieldBar = item.getChildAt(3);
+          Interstellar.physics.arcade.overlap(shield, bullets, shieldBulletHandler, null, this);
+          Interstellar.physics.arcade.overlap(ship, resources, resourceHandler, null, this);
+          Interstellar.physics.arcade.overlap(asteroids, shield, shieldAsteroidCollision, null, this);
+          Interstellar.physics.arcade.overlap(bullets, ship, shipShotHandler, null, this);
+          shield.x = ship.x;
+          shield.y = ship.y;
+          health.x = ship.x;
+          health.y = ship.y +62;
+          shieldBar.x = ship.x;
+          shieldBar.y = ship.y +50;
+        }
+        // i++;
     });
 
     Interstellar.physics.arcade.overlap(planets, ships, planetCrashHandler, (obj1, obj2) => {
@@ -285,85 +311,12 @@ function updatePlayer(playerShip, playerShield){
 
 
 function render() {
-    if(Interstellar.playerId)
-       Interstellar.debug.spriteInfo(players[Interstellar.playerId], 32, 32);
+    // if(Interstellar.playerId && Interstellar.players)
+    //    Interstellar.debug.spriteInfo(Interstellar.players[Interstellar.playerId], 32, 32);
     // Interstellar.debug.spriteBounds(miniMap);
     // Interstellar.debug.body(planets.getChildAt(0));
-    resources.forEachAlive((item)=>{
-      Interstellar.debug.body(item);
-    });
+    // resources.forEachAlive((item)=>{
+    //   Interstellar.debug.body(item);
+    // });
 
-}
-
-function createMiniMap() {
-
-  miniMapContainer = Interstellar.add.group();
-  resolution = .1;
-  if (Interstellar.world.width > 8000) {
-    var renderWH = 8000;
-  } else {
-    var renderWH = Interstellar.world.width;
-  }
-
-  renderTexture = Interstellar.add.renderTexture(renderWH, renderWH);
-  renderTexture.resolution = resolution;
-
-  var miniMapY = Interstellar.camera.view.height - (MiniMapHeight + MiniMapPaddingBottom);
-  var miniMapX = Interstellar.camera.view.width - (MiniMapWidth + MiniMapPaddingRight);
-  renderTexture.trueWidth = renderTexture.resolution * Interstellar.world.width;
-  renderTexture.trueHeight = renderTexture.resolution * Interstellar.world.height;
-
-  // var miniWidth = miniMapX - (.075 * renderTexture.trueWidth);
-  // var miniHeight = miniMapY - (.06 * renderTexture.trueHeight);
-  console.log(miniMapX + " " + miniMapY);
-  miniMap = Interstellar.add.sprite(miniMapX, miniMapY, renderTexture);
-  // var padding = .241 * renderTexture.trueHeight;
-  miniMap.fixedToCamera = true;
-
-  // The border used to contain the minimap
-  var miniMapUI = Interstellar.add.graphics(miniMapX, miniMapY);
-  // miniMapUI.width = (renderTexture.trueWidth + padding);
-  // miniMapUI.height = (renderTexture.trueHeight + padding);
-  miniMapUI.lineStyle(MiniMapLineThickness, 0xFFFFFF, 0.9);
-  miniMapUI.drawRoundedRect(0, 0, MiniMapWidth, MiniMapHeight, 4);
-  miniMapUI.fixedToCamera = true;
-
-  // Minimap contents
-  minimapContents = Interstellar.add.graphics(miniMap.x+1, miniMap.y+1);
-  minimapContents.fixedToCamera = true;
-
-  // Background to the minimap
-  var bg = Interstellar.add.graphics(miniMap.x+1, miniMap.y+1);
-  bg.beginFill(0x000033, 1);
-  let bgWidth = 150, bgHeight = 150;
-  bg.drawRect(0, 0, MiniMapWidth, MiniMapHeight);
-  bg.fixedToCamera = true;
-
-  var children = [bg, miniMap, minimapContents, miniMapUI]; // Place the elements in a certain viewing order
-  miniMapContainer.addMultiple(children);
-}
-
-function updateMiniMap(){
-  minimapContents.clear();
-  ships.forEach((item) => {
-    var unitMiniX = item.x * UpdateScaleWidth;
-    var unitMiniY = item.y * UpdateScaleHeight;
-    minimapContents.beginFill(ShipColor);
-    minimapContents.drawEllipse(unitMiniX, unitMiniY, 1.5, 1.5);
-  });
-  asteroids.forEachAlive((item) => {
-    var unitMiniX = item.x * UpdateScaleWidth;
-    var unitMiniY = item.y * UpdateScaleHeight;
-    minimapContents.beginFill(ShipColor);
-    minimapContents.drawEllipse(unitMiniX, unitMiniY, 2, 2);
-  });
-  planets.forEachAlive((item) => {
-    var unitMiniX = item.x * UpdateScaleWidth;
-    var unitMiniY = item.y * UpdateScaleHeight;
-    minimapContents.beginFill(ShipColor);
-    minimapContents.drawEllipse(unitMiniX, unitMiniY, 3, 3);
-    minimapContents.endFill();
-    minimapContents.lineStyle(1, 0xFFFFFF, 0.9);
-    minimapContents.drawEllipse(item.x* UpdateScaleWidth, item.y* UpdateScaleHeight, 250*UpdateScaleWidth, 250*UpdateScaleHeight);
-  });
 }
