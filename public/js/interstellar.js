@@ -108,7 +108,8 @@ function create() {
 
     Interstellar.physics.startSystem(Phaser.Physics.ARCADE);
     // Interstellar.physics.startSystem(Phaser.Physics.P2JS);
-    Interstellar.players = [];
+    Interstellar.playersX = [];
+    Interstellar.playersY = [];
     Interstellar.addNewPlayer = (id, username, x, y) => {
       if(username === Interstellar.playerUsername){
         Interstellar.playerId = id;
@@ -213,8 +214,8 @@ function update() {
     fighters.forEachAlive((item)=> {
         if(item.id !== Interstellar.playerId){
           let ship = item.getChildAt(0);
-          ship.x = Interstellar.player[item.id].x;
-          ship.y = Interstellar.player[item.id].y;
+          ship.x = Interstellar.playersX[item.id];
+          ship.y = Interstellar.playersY[item.id];
           let shield = item.getChildAt(1);
           let health = item.getChildAt(2);
           let shieldBar = item.getChildAt(3);
