@@ -137,6 +137,8 @@ function createPlanets(){
   planet.orbitCircle.drawEllipse(0, 0, 250, 250);
   planet.orbitCircle.parentObj = planet;
   planet.orbitCircle.claimPercent = 0;
+  planet.orbitCircle.claimTimer = null;
+  planet.orbitCircle.regenTimer = null;
 
   Interstellar.physics.arcade.enable(planet);
   planet.body.setCircle(14, 2, 2);
@@ -207,15 +209,36 @@ function collisionProcessCheck(obj1, obj2){
 }
 
 function claimingPlanet(claim, ship){
-  claim.clear();
+  window.clearInterval(claim.regenTimer);
+  window.clearTimeout(claim.claimTimer);
   claim.parentObj.faction = ship.faction;
   if(claim.claimPercent<360)
     claim.claimPercent += 0.2;
-  claim.lineStyle(1, 0xFFFFFF, 0.9);
-  claim.drawEllipse(0, 0, 250, 250);
-  claim.lineStyle(8, 0xe74c3c);
-  // console.log(claim.claimPercent);
-  claim.arc(0, 0, 250, Interstellar.math.degToRad(0), Interstellar.math.degToRad(claim.claimPercent), false);
+  updateArc(claim, true);
+  if(claim.claimPercent<360 && claim.claimPercent>0){
+    claim.claimTimer = window.setTimeout(() => {
+      claim.regenTimer = setInterval(()=>{
+        claim.claimPercent -= .1;
+        updateArc(claim, true);
+        if(claim.claimPercent <= 0){
+          claim.claimPercent = 0;
+          updateArc(claim, false);
+          clearInterval(claim.regenTimer);
+        }
+      }, 20);
+    }, 2000);
+
+  }
+}
+
+function updateArc(claimZone, hasArc){
+  claimZone.clear();
+  claimZone.lineStyle(1, 0xFFFFFF, 0.9);
+  claimZone.drawEllipse(0, 0, 250, 250);
+  if(hasArc){
+    claimZone.lineStyle(8, 0xe74c3c);
+    claimZone.arc(0, 0, 250, Interstellar.math.degToRad(0), Interstellar.math.degToRad(claimZone.claimPercent), false);
+  }
 }
 
 function updatePlayer(playerShip, playerShield){
