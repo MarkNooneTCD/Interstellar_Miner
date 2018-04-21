@@ -1,7 +1,7 @@
 var Client = {};
 function createClient(){
-  // Client.socket = io.connect('http://138.68.131.76');
-  Client.socket = io.connect();
+  Client.socket = io.connect('http://138.68.131.76');
+  // Client.socket = io.connect();
 
   Client.askNewPlayer = function(){
       let username = getParameterByName('username');
