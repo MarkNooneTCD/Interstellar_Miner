@@ -27,7 +27,7 @@ io.on('connection',function(socket){
         });
 
         socket.on('coord',function(data){
-            console.log("Coord Recieved: "+data.dataX + " " + data.dataY);
+            // console.log("Coord Recieved: "+data.dataX + " " + data.dataY);
             socket.player.x = data.dataX;
             socket.player.y = data.dataY;
             io.emit('move',socket.player);
