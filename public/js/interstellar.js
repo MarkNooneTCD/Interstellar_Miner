@@ -136,7 +136,6 @@ function create() {
       }
     };
 
-    Client.askNewPlayer();
 
     // Game Configurations
     fireButton = Interstellar.input.activePointer.leftButton;
@@ -157,6 +156,7 @@ function create() {
     createMiniMap();
     createPlanets();
     createClient();
+    Client.askNewPlayer();
     Interstellar.playerUpdater = setInterval(()=>{
       Client.sendCoord();
     }, 80);
