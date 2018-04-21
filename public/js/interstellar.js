@@ -120,7 +120,7 @@ function create() {
     };
 
 
-    Interstellar.remove = (id) => {
+    Interstellar.removePlayer = (id) => {
       fighters.forEach((item) => {
         if(item.id === id){
           item.getChildAt(0).kill();
