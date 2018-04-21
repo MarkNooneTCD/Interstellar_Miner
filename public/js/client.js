@@ -31,10 +31,7 @@ Client.disconnect = () => {
 };
 
 Client.socket.on('move',function(data){
-     // console.log("Moved player");
-     // console.log(Interstellar.players[data.id]);
-     Interstellar.playersX[data.id]=data.x;
-     Interstellar.playersY[data.id]=data.y;
+     Interstellar.movePlayer(data.id, data.x, data.y);
 });
 
 function getParameterByName(name, url) {

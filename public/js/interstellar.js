@@ -131,8 +131,8 @@ function create() {
     Interstellar.movePlayer = (id, x, y) => {
       if(Interstellar.players){
         // console.log(Interstellar.players);
-        // Interstellar.players[id].x = x;
-        // Interstellar.players[id].y = y;
+        Interstellar.playersX[id] = x;
+        Interstellar.playersY[id] = y;
       }
     };
 
