@@ -156,9 +156,11 @@ function create() {
     // createFighter(1400, 300, false, 2);
     createMiniMap();
     createPlanets();
+    createClient();
     Interstellar.playerUpdater = setInterval(()=>{
       Client.sendCoord();
     }, 80);
+
 }
 
 function createPlanets(){
