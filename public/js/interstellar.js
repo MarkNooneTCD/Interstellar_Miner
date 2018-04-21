@@ -128,8 +128,8 @@ function create() {
     };
 
     Interstellar.movePlayer = (id, x, y) => {
-      // players[id].x = x;
-      // players[id].y = y;
+      players[id].x = x;
+      players[id].y = y;
     };
 
     Client.askNewPlayer();
