@@ -76,7 +76,6 @@ function shipToShipCollisionHandler(ship1, ship2){
   ship2.xSpeed = -ship2.xSpeed;
   ship2.ySpeed = -ship2.ySpeed;
   console.log("Shield => Shield");
-  ship1.disableCollisionsFor.push(ship2);
   ship2.disableCollisionsFor.push(ship1);
   setTimeout(() => {
     let index = ship1.disableCollisionsFor.indexOf(ship2);
@@ -89,6 +88,19 @@ function shipToShipCollisionHandler(ship1, ship2){
     }
   }, 100);
   console.log("Ship => Ship");
+}
+
+function planetCrashHandler(ship, planet){
+  damageShip(ship, .4);
+  ship.xSpeed = -ship.xSpeed;
+  ship.ySpeed = -ship.ySpeed;
+  ship.disableCollisionsFor.push(planet);
+  setTimeout(() => {
+    let index = ship.disableCollisionsFor.indexOf(planet);
+    if (index > -1) {
+      ship.disableCollisionsFor.splice(index, 1);
+    }
+  }, 100);
 }
 
 

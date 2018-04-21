@@ -22,6 +22,31 @@ function movementWASDAngularVelocity(ship){
     }
 }
 
+function fireBullet (ship, shield) {
+    //  To avoid them being allowed to fire too fast we set a time limit
+    if (Interstellar.time.now > nextFire && bullets.countDead())
+    {
+        nextFire = Interstellar.time.now + fireRate;
+        //  Grab the first bullet we can from the pool
+        bullet = bullets.getFirstExists(false);
+        var length = 30;
+        //Add 2.5 in order to get the gun shooting from the middle
+        var x = ship.x+2.5 + (Math.cos(ship.rotation) * length);
+        var y = ship.y + (Math.sin(ship.rotation) * length);
+
+        if (bullet)
+        {
+            //  And fire it
+            bullet.reset(x, y);
+            bullet.sourceShield = shield;
+            bullet.sourceShip = ship;
+            bullet.rotation = Interstellar.physics.arcade.angleToPointer(bullet);
+            Interstellar.physics.arcade.moveToPointer(bullet, 700);
+        }
+    }
+
+}
+
 function movementWASDNonAngularVelocity(ship){
   if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.A))
   {

@@ -1,4 +1,4 @@
-function createFighter(shipX, shipY, isPlayer){
+function createFighter(shipX, shipY, isPlayer, faction){
   let fighter = Interstellar.add.group();
 
   // Create the fighter ship
@@ -8,6 +8,7 @@ function createFighter(shipX, shipY, isPlayer){
   tmpFighter.xSpeed=0;
   tmpFighter.ySpeed=0;
   tmpFighter.disableCollisionsFor = [];
+  tmpFighter.faction = faction;
 
   let tmpHealthBar = Interstellar.add.sprite(shipX, shipY+62, 'health-100');
   tmpHealthBar.anchor.setTo(0.5, 0.5);
@@ -42,9 +43,11 @@ function createFighter(shipX, shipY, isPlayer){
     Interstellar.camera.follow(tmpFighter, Phaser.Camera.FOLLOW_LOCKON, 0.1, 0.1);
 
   tmpShield.body.setCircle(275, 0, 0);
+  tmpShield.body.collideWorldBounds=true;
 
   //  Tell it we don't want physics to manage the rotation
   tmpFighter.body.allowRotation = false;
+  tmpFighter.body.collideWorldBounds=true;
   tmpFighter.events.onKilled.add(()=>{
     tmpShield.kill();
     tmpHealthBar.kill();
@@ -88,7 +91,7 @@ function createBullets(){
 function createAsteroids(){
   asteroids = Interstellar.add.group();
 
-  let asteroidObject = Interstellar.add.sprite(800, 300, 'health-100');
+  let asteroidObject = Interstellar.add.sprite(1200, 300, 'health-100');
   asteroidObject.anchor.setTo(0, 0);
   asteroidObject.scale.setTo(1.3, 1.3);
   Interstellar.physics.arcade.enable(asteroidObject);

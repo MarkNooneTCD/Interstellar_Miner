@@ -20,12 +20,16 @@ const MiniMapHeight = 250;
 const MiniMapPaddingRight = 30;
 const MiniMapPaddingBottom = 20;
 const MiniMapLineThickness = 3;
-const UpdateScale = MiniMapWidth/gameWidth;
+const UpdateScaleWidth = MiniMapWidth/mapWidth;
+const UpdateScaleHeight = MiniMapHeight/mapHeight;
 const ShipColor = 0xffffff;
 
+// Faction Constants
+const FactionColours = [ 0xa4b0be, 0xe74c3c, 0x27ae60 ];
+
 // Create Groups
-let asteroids, resources;
-let shields = [], ships = [], gameObjects = [];
+let asteroids, resources, planets;
+let shields = [], ships = [], gameObjects = [], claimZones = [];
 
 // Minimap
 let miniMapContainer, resolution, renderTexture, miniMap, minimapContents;
@@ -114,9 +118,35 @@ function create() {
     resources = Interstellar.add.group();
     createAsteroids();
     createBullets();
-    createFighter(400, 300, true);
-    createFighter(1400, 300, false);
+    createFighter(400, 800, true, 1);
+    createFighter(1400, 300, false, 2);
     createMiniMap();
+    createPlanets();
+}
+
+function createPlanets(){
+  planets = Interstellar.add.group();
+
+  let planet = Interstellar.add.sprite(800, 800, 'planet-2');
+  planet.scale.setTo(4, 4);
+  planet.anchor.setTo(.5, .5);
+  planet.faction = 0;
+  planet.claim = 0;
+  planet.orbitCircle = Interstellar.add.graphics(planet.x, planet.y);
+  planet.orbitCircle.lineStyle(1, 0xFFFFFF, 0.9);
+  planet.orbitCircle.drawEllipse(0, 0, 250, 250);
+  planet.orbitCircle.parentObj = planet;
+  planet.orbitCircle.claimPercent = 0;
+
+  Interstellar.physics.arcade.enable(planet);
+  planet.body.setCircle(14, 2, 2);
+
+  Interstellar.physics.arcade.enable(planet.orbitCircle);
+  planet.orbitCircle.body.setCircle(250, -250, -250);
+
+
+  claimZones.push(planet.orbitCircle);
+  planets.add(planet);
 }
 
 function update() {
@@ -141,6 +171,16 @@ function update() {
         i++;
     });
 
+    Interstellar.physics.arcade.overlap(planets, ships, planetCrashHandler, (obj1, obj2) => {
+      if (obj1.disableCollisionsFor.includes(obj2))
+        return false;
+      else
+        return true;
+    }, this);
+    Interstellar.physics.arcade.overlap(planets, bullets, (planet, bullet) => {
+      bullet.kill();
+    }, null, this);
+    Interstellar.physics.arcade.overlap(claimZones, ships, claimingPlanet, null, this);
     Interstellar.physics.arcade.overlap(shields, shields, shieldtoShieldCollisionHandler, collisionProcessCheck, this);
     Interstellar.physics.arcade.overlap(shields, ships, shieldToShipCollisionHandler, (shield1, ship1) => {
       if(shield1.associatedShipSprite === ship1)
@@ -166,7 +206,17 @@ function collisionProcessCheck(obj1, obj2){
     return true;
 }
 
-
+function claimingPlanet(claim, ship){
+  claim.clear();
+  claim.parentObj.faction = ship.faction;
+  if(claim.claimPercent<360)
+    claim.claimPercent += 0.2;
+  claim.lineStyle(1, 0xFFFFFF, 0.9);
+  claim.drawEllipse(0, 0, 250, 250);
+  claim.lineStyle(8, 0xe74c3c);
+  // console.log(claim.claimPercent);
+  claim.arc(0, 0, 250, Interstellar.math.degToRad(0), Interstellar.math.degToRad(claim.claimPercent), false);
+}
 
 function updatePlayer(playerShip, playerShield){
   playerShip.rotation = Interstellar.physics.arcade.angleToPointer(playerShip);
@@ -181,35 +231,10 @@ function updatePlayer(playerShip, playerShield){
 function render() {
     Interstellar.debug.spriteInfo(fighters.getChildAt(0).getChildAt(0), 32, 32);
     // Interstellar.debug.spriteBounds(miniMap);
-    // Interstellar.debug.body(asteroids.getChildAt(0));
+    // Interstellar.debug.body(planets.getChildAt(0));
     resources.forEachAlive((item)=>{
       Interstellar.debug.body(item);
     });
-
-}
-
-function fireBullet (ship, shield) {
-    //  To avoid them being allowed to fire too fast we set a time limit
-    if (Interstellar.time.now > nextFire && bullets.countDead())
-    {
-        nextFire = Interstellar.time.now + fireRate;
-        //  Grab the first bullet we can from the pool
-        bullet = bullets.getFirstExists(false);
-        var length = 30;
-        //Add 2.5 in order to get the gun shooting from the middle
-        var x = ship.x+2.5 + (Math.cos(ship.rotation) * length);
-        var y = ship.y + (Math.sin(ship.rotation) * length);
-
-        if (bullet)
-        {
-            //  And fire it
-            bullet.reset(x, y);
-            bullet.sourceShield = shield;
-            bullet.sourceShip = ship;
-            bullet.rotation = Interstellar.physics.arcade.angleToPointer(bullet);
-            Interstellar.physics.arcade.moveToPointer(bullet, 700);
-        }
-    }
 
 }
 
@@ -264,9 +289,24 @@ function createMiniMap() {
 function updateMiniMap(){
   minimapContents.clear();
   ships.forEach((item) => {
-    var unitMiniX = item.x * UpdateScale;
-    var unitMiniY = item.y * UpdateScale;
+    var unitMiniX = item.x * UpdateScaleWidth;
+    var unitMiniY = item.y * UpdateScaleHeight;
     minimapContents.beginFill(ShipColor);
     minimapContents.drawEllipse(unitMiniX, unitMiniY, 1.5, 1.5);
+  });
+  asteroids.forEachAlive((item) => {
+    var unitMiniX = item.x * UpdateScaleWidth;
+    var unitMiniY = item.y * UpdateScaleHeight;
+    minimapContents.beginFill(ShipColor);
+    minimapContents.drawEllipse(unitMiniX, unitMiniY, 2, 2);
+  });
+  planets.forEachAlive((item) => {
+    var unitMiniX = item.x * UpdateScaleWidth;
+    var unitMiniY = item.y * UpdateScaleHeight;
+    minimapContents.beginFill(ShipColor);
+    minimapContents.drawEllipse(unitMiniX, unitMiniY, 3, 3);
+    minimapContents.endFill();
+    minimapContents.lineStyle(1, 0xFFFFFF, 0.9);
+    minimapContents.drawEllipse(item.x* UpdateScaleWidth, item.y* UpdateScaleHeight, 250*UpdateScaleWidth, 250*UpdateScaleHeight);
   });
 }
