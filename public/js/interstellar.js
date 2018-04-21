@@ -43,6 +43,11 @@ let bullets, nextFire = 0, fireButton, bulletDamage = 10;
 // Game Config
 let spaceBackground;
 
+// Window events
+window.onbeforeunload = function(e) {
+  Client.disconnect();
+};
+
 var Interstellar = new Phaser.Game(gameWidth, gameHeight, Phaser.AUTO, '', {
   preload: preload,
   create: create,

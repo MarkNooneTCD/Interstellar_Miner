@@ -1,5 +1,5 @@
 var Client = {};
-Client.socket = io.connect();
+Client.socket = io.connect('http://138.68.131.76');
 
 Client.askNewPlayer = function(){
     let username = getParameterByName('username');
@@ -25,6 +25,10 @@ Client.socket.on('allplayers',function(data){
         Interstellar.addNewPlayer(data[i].id, data[i].username, data[i].x, data[i].y);
     }
 });
+
+Client.disconnect = () {
+  Client.socket.emit('disconnect');
+};
 
 Client.socket.on('move',function(data){
     Interstellar.movePlayer(data.id, data.x, data.y);
