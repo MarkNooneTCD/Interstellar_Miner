@@ -1,8 +1,10 @@
+// TODO: Make All constants begin with capital letters.
 // Necessary Game constants
 const mvmtSpeed = 5;
 const fireRate = 300;
 const gameWidth = window.innerWidth;
 const gameHeight = window.innerHeight;
+const gameSize = gameWidth/100;
 const acceleration = .2;
 const slowDown = 0.03;
 const maxSpeed = 5;
@@ -11,9 +13,22 @@ const mapHeight = 5000;
 const meteorChildSpawnMax = 3;
 const meteorChildSpawnMin = 1;
 const asteroidOffset = 4;
+
+// Minimap constants
+const MiniMapWidth = 400;
+const MiniMapHeight = 250;
+const MiniMapPaddingRight = 30;
+const MiniMapPaddingBottom = 20;
+const MiniMapLineThickness = 3;
+const UpdateScale = MiniMapWidth/gameWidth;
+const ShipColor = 0xffffff;
+
 // Create Groups
 let asteroids, resources;
-let shields = [], ships = [];
+let shields = [], ships = [], gameObjects = [];
+
+// Minimap
+let miniMapContainer, resolution, renderTexture, miniMap, minimapContents;
 
 // Create sprite variables
 let fighters
@@ -39,6 +54,7 @@ function preload() {
     Interstellar.load.image('asteroid', 'assets/images/asteroid.png');
     Interstellar.load.image('gold', 'assets/images/resources/gold.png');
     Interstellar.load.image('shield', 'assets/images/spr_shield.png');
+    Interstellar.load.image('mini_map', 'assets/images/miniCircle.png');
     Interstellar.load.image('planet-1', 'assets/images/planets/planet-1.png');
     Interstellar.load.image('planet-2', 'assets/images/planets/planet-2.png');
     Interstellar.load.image('planet-3', 'assets/images/planets/planet-3.png');
@@ -100,7 +116,7 @@ function create() {
     createBullets();
     createFighter(400, 300, true);
     createFighter(1400, 300, false);
-
+    createMiniMap();
 }
 
 function update() {
@@ -140,11 +156,7 @@ function update() {
     resources.forEachAlive((item)=>{
       item.angle += -.5;
     });
-    drawMiniMap();
-}
-
-function drawMiniMap() {
-
+    updateMiniMap();
 }
 
 function collisionProcessCheck(obj1, obj2){
@@ -168,6 +180,7 @@ function updatePlayer(playerShip, playerShield){
 
 function render() {
     Interstellar.debug.spriteInfo(fighters.getChildAt(0).getChildAt(0), 32, 32);
+    // Interstellar.debug.spriteBounds(miniMap);
     // Interstellar.debug.body(asteroids.getChildAt(0));
     resources.forEachAlive((item)=>{
       Interstellar.debug.body(item);
@@ -200,77 +213,60 @@ function fireBullet (ship, shield) {
 
 }
 
-
-/*
-MINIMAP EXAMPLE
 function createMiniMap() {
-  miniMapContainer = game.add.group();
-  resolution = 2 / gameSize;
-  if (game.world.width > 8000) {
+
+  miniMapContainer = Interstellar.add.group();
+  resolution = .1;
+  if (Interstellar.world.width > 8000) {
     var renderWH = 8000;
   } else {
-    var renderWH = game.world.width;
+    var renderWH = Interstellar.world.width;
   }
-  renderTexture = game.add.renderTexture(renderWH, renderWH);
+
+  renderTexture = Interstellar.add.renderTexture(renderWH, renderWH);
   renderTexture.resolution = resolution;
-  var cropRect = new Phaser.Rectangle(0, 0, 200, 200);
-  renderTexture.crop = cropRect;
-  var miniMapY = game.camera.view.height - (game.world.height * resolution);
-  var miniMapUI = game.add.image(0, 0, 'mini_map');
-  renderTexture.trueWidth = renderTexture.resolution * game.world.width;
-  renderTexture.trueHeight = renderTexture.resolution * game.world.height;
-  var cropRect = new Phaser.Rectangle(0, 0, renderTexture.trueWidth, renderTexture.trueHeight);
-  renderTexture.crop = cropRect;
-  var miniWidth = .075 * renderTexture.trueWidth;
-  var miniHeight = miniMapY - (.06 * renderTexture.trueHeight);
-  miniMap = game.add.sprite(miniWidth, miniHeight, renderTexture);
-  var padding = .241 * renderTexture.trueHeight;
-  miniMapUI.width = (renderTexture.trueWidth + padding);
-  miniMapUI.height = (renderTexture.trueHeight + padding);
-  miniMapUI.y = game.camera.view.height - miniMapUI.height;
-  miniMapUI.fixedToCamera = true;
+
+  var miniMapY = Interstellar.camera.view.height - (MiniMapHeight + MiniMapPaddingBottom);
+  var miniMapX = Interstellar.camera.view.width - (MiniMapWidth + MiniMapPaddingRight);
+  renderTexture.trueWidth = renderTexture.resolution * Interstellar.world.width;
+  renderTexture.trueHeight = renderTexture.resolution * Interstellar.world.height;
+
+  // var miniWidth = miniMapX - (.075 * renderTexture.trueWidth);
+  // var miniHeight = miniMapY - (.06 * renderTexture.trueHeight);
+  console.log(miniMapX + " " + miniMapY);
+  miniMap = Interstellar.add.sprite(miniMapX, miniMapY, renderTexture);
+  // var padding = .241 * renderTexture.trueHeight;
   miniMap.fixedToCamera = true;
-  viewRect = game.add.graphics(0, 0);
-  viewRect.lineStyle(1, 0xFFFFFF);
-  viewRect.drawRect(miniMap.x, miniMap.y, game.camera.view.width * resolution, game.camera.view.height * resolution);
-  unitDots = game.add.graphics(miniMap.x, miniMap.y);
-  unitDots.fixedToCamera = true;
-  var bg = game.add.graphics(0, 0);
-  bg.beginFill(0x000000, 1);
-  bg.drawRect(0, miniMapUI.y + (miniMapUI.height * .1), miniMapUI.width * .95, miniMapUI.height * .9);
+
+  // The border used to contain the minimap
+  var miniMapUI = Interstellar.add.graphics(miniMapX, miniMapY);
+  // miniMapUI.width = (renderTexture.trueWidth + padding);
+  // miniMapUI.height = (renderTexture.trueHeight + padding);
+  miniMapUI.lineStyle(MiniMapLineThickness, 0xFFFFFF, 0.9);
+  miniMapUI.drawRoundedRect(0, 0, MiniMapWidth, MiniMapHeight, 4);
+  miniMapUI.fixedToCamera = true;
+
+  // Minimap contents
+  minimapContents = Interstellar.add.graphics(miniMap.x+1, miniMap.y+1);
+  minimapContents.fixedToCamera = true;
+
+  // Background to the minimap
+  var bg = Interstellar.add.graphics(miniMap.x+1, miniMap.y+1);
+  bg.beginFill(0x000033, 1);
+  let bgWidth = 150, bgHeight = 150;
+  bg.drawRect(0, 0, MiniMapWidth, MiniMapHeight);
   bg.fixedToCamera = true;
-  var children = [bg, miniMap, unitDots, viewRect, miniMapUI];
+
+  var children = [bg, miniMap, minimapContents, miniMapUI]; // Place the elements in a certain viewing order
   miniMapContainer.addMultiple(children);
 }
 
-function updateUnitDots() {
-  unitDots.clear();
-  gameObjects.forEach(function(object) {
-    var unitMiniX = object.x * renderTexture.resolution;
-    var unitMiniY = object.y * renderTexture.resolution;
-    var objectType = object.objectType;
-    if (objectType == 'unit' || objectType == 'building' || objectType == 'wall') {
-      if (playerColors[object.player - 2] == undefined) {
-        // player 1
-        var color = '0x1331a1';
-      } else {
-        var color = playerColors[object.player - 2].color;
-      }            unitDots.beginFill(color);
-      if (objectType == 'building') {
-        unitDots.drawRect(unitMiniX, unitMiniY, 5, 5);
-      } else {
-        unitDots.drawEllipse(unitMiniX, unitMiniY, 1.5, 1.5);
-      }
-    } else if (objectType == 'plant') {
-      // tree
-      unitDots.beginFill(0x2A4B17);
-      unitDots.drawEllipse(unitMiniX, unitMiniY, 2, 2);
-    } else {
-      var color = '0x666666';
-      // gray
-      unitDots.beginFill(color);
-      unitDots.drawRect(unitMiniX, unitMiniY, 5, 5);
-    }
+function updateMiniMap(){
+  minimapContents.clear();
+  ships.forEach((item) => {
+    var unitMiniX = item.x * UpdateScale;
+    var unitMiniY = item.y * UpdateScale;
+    minimapContents.beginFill(ShipColor);
+    minimapContents.drawEllipse(unitMiniX, unitMiniY, 1.5, 1.5);
   });
 }
-*/
