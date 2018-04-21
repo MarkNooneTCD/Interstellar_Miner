@@ -26,7 +26,7 @@ Client.socket.on('allplayers',function(data){
     }
 });
 
-Client.disconnect = () {
+Client.disconnect = () => {
   Client.socket.emit('disconnect');
 };
 
