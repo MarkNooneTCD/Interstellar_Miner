@@ -158,7 +158,7 @@ function create() {
     createPlanets();
     Interstellar.playerUpdater = setInterval(()=>{
       Client.sendCoord();
-    }, 2000);
+    }, 80);
 }
 
 function createPlanets(){
