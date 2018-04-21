@@ -39,6 +39,11 @@ function preload() {
     Interstellar.load.image('asteroid', 'assets/images/asteroid.png');
     Interstellar.load.image('gold', 'assets/images/resources/gold.png');
     Interstellar.load.image('shield', 'assets/images/spr_shield.png');
+    Interstellar.load.image('planet-1', 'assets/images/planets/planet-1.png');
+    Interstellar.load.image('planet-2', 'assets/images/planets/planet-2.png');
+    Interstellar.load.image('planet-3', 'assets/images/planets/planet-3.png');
+    Interstellar.load.image('planet-4', 'assets/images/planets/planet-4.png');
+    Interstellar.load.image('planet-5', 'assets/images/planets/planet-5.png');
     Interstellar.load.image('health-100', 'assets/images/bars/100-bar-health.png');
     Interstellar.load.image('health-90', 'assets/images/bars/90-bar-health.png');
     Interstellar.load.image('health-80', 'assets/images/bars/80-bar-health.png');
@@ -98,147 +103,6 @@ function create() {
 
 }
 
-function createFighter(shipX, shipY, isPlayer){
-  let fighter = Interstellar.add.group();
-
-  // Create the fighter ship
-  let tmpFighter = Interstellar.add.sprite(shipX, shipY, 'fighter');
-  tmpFighter.anchor.setTo(0.5, 0.5);
-  tmpFighter.scale.setTo(.4, .4);
-  tmpFighter.xSpeed=0;
-  tmpFighter.ySpeed=0;
-  tmpFighter.disableCollisionsFor = [];
-
-  let tmpHealthBar = Interstellar.add.sprite(shipX, shipY+62, 'health-100');
-  tmpHealthBar.anchor.setTo(0.5, 0.5);
-  tmpHealthBar.scale.setTo(1.5, 1.3);
-  tmpFighter.healthBar = tmpHealthBar;
-
-  // Create shield
-  let tmpShield = Interstellar.add.sprite(shipX, shipY, 'shield');
-  tmpShield.anchor.setTo(0.5, 0.5);
-  tmpShield.scale.setTo(0.15, 0.15);
-  tmpShield.associatedShipSprite = tmpFighter;
-  tmpShield.lastCollision = null;
-  tmpShield.timeout = null;
-  tmpShield.disableCollisionsFor = [];
-  tmpShield.events.onKilled.add(() => {
-    console.log("Shield dead.");
-  });
-  tmpShield.alpha = 0;
-
-  let tmpShieldBar = Interstellar.add.sprite(shipX, shipY+50, 'shield-100');
-  tmpShieldBar.anchor.setTo(0.5, 0.5);
-  tmpShieldBar.scale.setTo(1.5, 1.3);
-  tmpShield.shieldBar = tmpShieldBar;
-
-
-  // Physics Handling
-  Interstellar.physics.enable(tmpFighter, Phaser.Physics.ARCADE);
-  Interstellar.physics.arcade.enable(tmpShield);
-
-  // Camera follow only player
-  if(isPlayer)
-    Interstellar.camera.follow(tmpFighter, Phaser.Camera.FOLLOW_LOCKON, 0.1, 0.1);
-
-  tmpShield.body.setCircle(275, 0, 0);
-
-  //  Tell it we don't want physics to manage the rotation
-  tmpFighter.body.allowRotation = false;
-  tmpFighter.events.onKilled.add(()=>{
-    tmpShield.kill();
-    tmpHealthBar.kill();
-    tmpShieldBar.kill();
-    fighters.remove(fighter);
-  });
-
-  // Add to physics groups
-  shields.push(tmpShield);
-  ships.push(tmpFighter);
-
-  // Create a single fighter object
-  fighter.add(tmpFighter);
-  fighter.add(tmpShield);
-  fighter.add(tmpHealthBar);
-  fighter.add(tmpShieldBar);
-
-  // Push to all fighter objects
-  fighters.add(fighter);
-
-}
-
-function createBullets(){
-  // Bullets Group
-  bullets = Interstellar.add.group();
-  bullets.enableBody = true;
-  bullets.physicsBodyType = Phaser.Physics.ARCADE;
-  bullets.createMultiple(30, 'bullet');
-  bullets.forEach((item)=> {
-    item.sourceShield = null;
-    item.sourceShip = null;
-    item.anchor.x = 0.5;
-    item.anchor.y = 1;
-    item.scale.x = .5;
-    item.scale.y = .5;
-    item.outOfBoundsKill = true;
-    item.checkWorldBounds = true;
-  });
-}
-
-function createAsteroids(){
-  asteroids = Interstellar.add.group();
-
-  let asteroidObject = Interstellar.add.sprite(800, 300, 'health-100');
-  asteroidObject.anchor.setTo(0, 0);
-  asteroidObject.scale.setTo(1.3, 1.3);
-  Interstellar.physics.arcade.enable(asteroidObject);
-  asteroidObject.body.setCircle(30, -14, 14); // Set body to circle with radius, xOffset
-  let tmp = asteroidObject.addChild(Interstellar.make.sprite(15, 45, 'asteroid'));
-  tmp.anchor.setTo(0.5, 0.5);
-
-  asteroidObject.events.onKilled.add(() => {
-    let rand = Math.floor(Math.random() * meteorChildSpawnMax) + meteorChildSpawnMin
-    for(let i = 0; i <= rand; i++){
-      let angle = Math.random()*Math.PI*2;
-      let rx = Math.cos(angle)*60;
-      let ry = Math.sin(angle)*60;
-      let spawn = Interstellar.add.sprite(800, 300, 'health-100');
-      spawn.anchor.setTo(0, 0);
-      spawn.x += rx;
-      spawn.y += ry;
-      spawn.scale.setTo(.6, .6);
-      Interstellar.physics.arcade.enable(spawn);
-      spawn.body.setCircle(30, -14, 14); // Set body to circle with radius, xOffset
-      let spawnTmp = spawn.addChild(Interstellar.make.sprite(15, 45, 'asteroid'));
-      spawnTmp.anchor.setTo(0.5, 0.5);
-
-      spawn.events.onKilled.add(() => {
-        let r = 1;//Math.floor(Math.random() * 3)+1;
-        let resource;
-        switch(r){
-          case 1:
-            resource = Interstellar.add.sprite(spawn.x, spawn.y, 'gold');
-            resource.scale.setTo(1.3, 1.3);
-            resource.anchor.setTo(0.5, 0.5);
-            Interstellar.physics.arcade.enable(resource);
-            resource.body.setCircle(6, 0, 0);
-            resources.add(resource);
-            break;
-          case 2:
-            break;
-          case 3:
-            break;
-          default:
-        }
-      });
-
-      asteroids.add(spawn);
-    }
-  }, this);
-
-  asteroids.add(asteroidObject);
-}
-
 function update() {
     let i = 0;
     fighters.forEachAlive((item)=> {
@@ -276,6 +140,11 @@ function update() {
     resources.forEachAlive((item)=>{
       item.angle += -.5;
     });
+    drawMiniMap();
+}
+
+function drawMiniMap() {
+
 }
 
 function collisionProcessCheck(obj1, obj2){
@@ -285,105 +154,7 @@ function collisionProcessCheck(obj1, obj2){
     return true;
 }
 
-function shieldtoShieldCollisionHandler(shield1, shield2){
-  damageShield(shield1, .2);
-  damageShield(shield2, .2);
-  let ship1 = shield1.associatedShipSprite;
-  let ship2 = shield2.associatedShipSprite;
-  ship1.xSpeed = -ship1.xSpeed;
-  ship1.ySpeed = -ship1.ySpeed;
-  ship2.xSpeed = -ship2.xSpeed;
-  ship2.ySpeed = -ship2.ySpeed;
-  // console.log("Shield => Shield");
-  shield1.disableCollisionsFor.push(shield2);
-  shield2.disableCollisionsFor.push(shield1);
-  setTimeout(() => {
-    let index = shield1.disableCollisionsFor.indexOf(shield2);
-    if (index > -1) {
-      shield1.disableCollisionsFor.splice(index, 1);
-    }
-    index = shield2.disableCollisionsFor.indexOf(shield1);
-    if (index > -1) {
-      shield2.disableCollisionsFor.splice(index, 1);
-    }
-  }, 100);
-}
 
-function shieldToShipCollisionHandler(shield1, ship1){
-  damageShield(shield1, .1);
-  damageShip(ship1, .2)
-  let ship2 = shield1.associatedShipSprite;
-  ship1.xSpeed = -ship1.xSpeed;
-  ship1.ySpeed = -ship1.ySpeed;
-  ship2.xSpeed = -ship2.xSpeed;
-  ship2.ySpeed = -ship2.ySpeed;
-  shield1.disableCollisionsFor.push(ship1);
-  ship1.disableCollisionsFor.push(shield1);
-  setTimeout(() => {
-    let index = shield1.disableCollisionsFor.indexOf(ship1);
-    if (index > -1) {
-      shield1.disableCollisionsFor.splice(index, 1);
-    }
-    index = ship1.disableCollisionsFor.indexOf(shield1);
-    if (index > -1) {
-      ship1.disableCollisionsFor.splice(index, 1);
-    }
-  }, 100);
-  // console.log("Shield => Ship");
-}
-
-function shipToShipCollisionHandler(ship1, ship2){
-  damageShip(ship1, .3);
-  damageShip(ship2, .3);
-  ship1.xSpeed = -ship1.xSpeed;
-  ship1.ySpeed = -ship1.ySpeed;
-  ship2.xSpeed = -ship2.xSpeed;
-  ship2.ySpeed = -ship2.ySpeed;
-  console.log("Shield => Shield");
-  ship1.disableCollisionsFor.push(ship2);
-  ship2.disableCollisionsFor.push(ship1);
-  setTimeout(() => {
-    let index = ship1.disableCollisionsFor.indexOf(ship2);
-    if (index > -1) {
-      ship1.disableCollisionsFor.splice(index, 1);
-    }
-    index = ship2.disableCollisionsFor.indexOf(ship1);
-    if (index > -1) {
-      ship2.disableCollisionsFor.splice(index, 1);
-    }
-  }, 100);
-  console.log("Ship => Ship");
-}
-
-
-//TODO: Needs some serious work
-function shieldAsteroidCollision(shield, asteroid){
-  if(!(shield.lastCollison === asteroid)){
-    console.log("Inside");
-    let ship = shield.associatedShipSprite;
-    if(ship.xSpeed < 0.1){
-      ship.xSpeed =0;
-    } else{
-      ship.xSpeed = -ship.xSpeed*0.5;
-    }
-    if(ship.ySpeed < 0.1){
-      ship.ySpeed =0;
-    } else{
-      ship.ySpeed = -ship.ySpeed*0.5;
-    }
-
-    damageAsteroid(asteroid, .2);
-    // damageShield(shield, .5);
-    shield.lastCollison = asteroid;
-    setTimeout(()=>{
-      shield.lastCollison = null;
-    }, 200);
-  } else {
-    console.log("out");
-    return;
-  }
-
-}
 
 function updatePlayer(playerShip, playerShield){
   playerShip.rotation = Interstellar.physics.arcade.angleToPointer(playerShip);
@@ -393,113 +164,7 @@ function updatePlayer(playerShip, playerShield){
       fireBullet(playerShip, playerShield);
   }
 }
-function shipShotHandler(ship, bullet){
-  if(bullet.sourceShip === ship)
-    return;
-  bullet.kill();
-  damageShip(ship, 0.25);
-}
 
-function shieldBulletHandler(shield, bullet){
-  if(bullet.sourceShield === shield)
-    return;
-  bullet.kill();
-  damageShield(shield, 0.15);
-}
-
-function damageShip(ship, value){
-  ship.damage(value);
-  // Change the health bar depending on damage
-  if(ship.health >= 0.9 && ship.health < 1){
-    ship.healthBar.loadTexture('health-90', 0);
-  } else if(ship.health >= 0.8 && ship.health < .9){
-    ship.healthBar.loadTexture('health-80', 0);
-  } else if(ship.health >= 0.7 && ship.health < .8){
-    ship.healthBar.loadTexture('health-70', 0);
-  } else if(ship.health >= 0.6 && ship.health < .7){
-    ship.healthBar.loadTexture('health-60', 0);
-  } else if(ship.health >= 0.5 && ship.health < .6){
-    ship.healthBar.loadTexture('health-50', 0);
-  } else if(ship.health >= 0.4 && ship.health < .5){
-    ship.healthBar.loadTexture('health-40', 0);
-  } else if(ship.health >= 0.3 && ship.health < .4){
-    ship.healthBar.loadTexture('health-30', 0);
-  } else if(ship.health >= 0.2 && ship.health < .3){
-    ship.healthBar.loadTexture('health-20', 0);
-  } else if(ship.health >= 0.1 && ship.health < .2){
-    ship.healthBar.loadTexture('health-10', 0);
-  } else if(ship.health >= 0 && ship.health < .1){
-    ship.healthBar.loadTexture('health-0', 0);
-  }
-}
-
-function damageShield(shield, value) {
-  shield.damage(value);
-  shield.alpha = 100;
-  clearTimeout(shield.timeout);
-  shield.timeout = setTimeout(()=>{
-    shield.alpha = 0;
-  }, 80);
-
-  // Change the shield bar depending on damage
-  if(shield.health >= 0.9 && shield.health < 1){
-    shield.shieldBar.loadTexture('shield-90', 0);
-  } else if(shield.health >= 0.8 && shield.health < .9){
-    shield.shieldBar.loadTexture('shield-80', 0);
-  } else if(shield.health >= 0.7 && shield.health < .8){
-    shield.shieldBar.loadTexture('shield-70', 0);
-  } else if(shield.health >= 0.6 && shield.health < .7){
-    shield.shieldBar.loadTexture('shield-60', 0);
-  } else if(shield.health >= 0.5 && shield.health < .6){
-    shield.shieldBar.loadTexture('shield-50', 0);
-  } else if(shield.health >= 0.4 && shield.health < .5){
-    shield.shieldBar.loadTexture('shield-40', 0);
-  } else if(shield.health >= 0.3 && shield.health < .4){
-    shield.shieldBar.loadTexture('shield-30', 0);
-  } else if(shield.health >= 0.2 && shield.health < .3){
-    shield.shieldBar.loadTexture('shield-20', 0);
-  } else if(shield.health >= 0.1 && shield.health < .2){
-    shield.shieldBar.loadTexture('shield-10', 0);
-  } else if(shield.health >= 0 && shield.health < .1){
-    shield.shieldBar.loadTexture('shield-0', 0);
-  }
-}
-
-function resourceHandler(fighter, resource) {
-  resource.kill();
-}
-
-function asteroidCollisionHandler (asteroid, bullet) {
-    bullet.kill(); // Destroy The bullet on hit
-    damageAsteroid(asteroid, 0.1);
-}
-
-function damageAsteroid(asteroid, damage){
-  asteroid.damage(damage);
-
-  // Change the health bar depending on damage
-  if(asteroid.health >= 0.9 && asteroid.health < 1){
-    asteroid.loadTexture('health-90', 0);
-  } else if(asteroid.health >= 0.8 && asteroid.health < .9){
-    asteroid.loadTexture('health-80', 0);
-  } else if(asteroid.health >= 0.7 && asteroid.health < .8){
-    asteroid.loadTexture('health-70', 0);
-  } else if(asteroid.health >= 0.6 && asteroid.health < .7){
-    asteroid.loadTexture('health-60', 0);
-  } else if(asteroid.health >= 0.5 && asteroid.health < .6){
-    asteroid.loadTexture('health-50', 0);
-  } else if(asteroid.health >= 0.4 && asteroid.health < .5){
-    asteroid.loadTexture('health-40', 0);
-  } else if(asteroid.health >= 0.3 && asteroid.health < .4){
-    asteroid.loadTexture('health-30', 0);
-  } else if(asteroid.health >= 0.2 && asteroid.health < .3){
-    asteroid.loadTexture('health-20', 0);
-  } else if(asteroid.health >= 0.1 && asteroid.health < .2){
-    asteroid.loadTexture('health-10', 0);
-  } else if(asteroid.health >= 0 && asteroid.health < .1){
-    asteroid.loadTexture('health-0', 0);
-  }
-}
 
 function render() {
     Interstellar.debug.spriteInfo(fighters.getChildAt(0).getChildAt(0), 32, 32);
@@ -535,67 +200,77 @@ function fireBullet (ship, shield) {
 
 }
 
-function movementWASDAngularVelocity(ship){
-  if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.W))
-    {
-        Interstellar.physics.arcade.accelerationFromRotation(ship.rotation, 200, ship.body.acceleration);
-    }
-    else
-    {
-        ship.body.acceleration.set(0);
-    }
 
-    if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.A))
-    {
-        ship.body.angularVelocity = -200;
-    }
-    else if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.D))
-    {
-        ship.body.angularVelocity = 200;
-    }
-    else
-    {
-        ship.body.angularVelocity = 0;
-    }
+/*
+MINIMAP EXAMPLE
+function createMiniMap() {
+  miniMapContainer = game.add.group();
+  resolution = 2 / gameSize;
+  if (game.world.width > 8000) {
+    var renderWH = 8000;
+  } else {
+    var renderWH = game.world.width;
+  }
+  renderTexture = game.add.renderTexture(renderWH, renderWH);
+  renderTexture.resolution = resolution;
+  var cropRect = new Phaser.Rectangle(0, 0, 200, 200);
+  renderTexture.crop = cropRect;
+  var miniMapY = game.camera.view.height - (game.world.height * resolution);
+  var miniMapUI = game.add.image(0, 0, 'mini_map');
+  renderTexture.trueWidth = renderTexture.resolution * game.world.width;
+  renderTexture.trueHeight = renderTexture.resolution * game.world.height;
+  var cropRect = new Phaser.Rectangle(0, 0, renderTexture.trueWidth, renderTexture.trueHeight);
+  renderTexture.crop = cropRect;
+  var miniWidth = .075 * renderTexture.trueWidth;
+  var miniHeight = miniMapY - (.06 * renderTexture.trueHeight);
+  miniMap = game.add.sprite(miniWidth, miniHeight, renderTexture);
+  var padding = .241 * renderTexture.trueHeight;
+  miniMapUI.width = (renderTexture.trueWidth + padding);
+  miniMapUI.height = (renderTexture.trueHeight + padding);
+  miniMapUI.y = game.camera.view.height - miniMapUI.height;
+  miniMapUI.fixedToCamera = true;
+  miniMap.fixedToCamera = true;
+  viewRect = game.add.graphics(0, 0);
+  viewRect.lineStyle(1, 0xFFFFFF);
+  viewRect.drawRect(miniMap.x, miniMap.y, game.camera.view.width * resolution, game.camera.view.height * resolution);
+  unitDots = game.add.graphics(miniMap.x, miniMap.y);
+  unitDots.fixedToCamera = true;
+  var bg = game.add.graphics(0, 0);
+  bg.beginFill(0x000000, 1);
+  bg.drawRect(0, miniMapUI.y + (miniMapUI.height * .1), miniMapUI.width * .95, miniMapUI.height * .9);
+  bg.fixedToCamera = true;
+  var children = [bg, miniMap, unitDots, viewRect, miniMapUI];
+  miniMapContainer.addMultiple(children);
 }
 
-function movementWASDNonAngularVelocity(ship){
-  if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.A))
-  {
-    if(ship.xSpeed >= 0- maxSpeed){
-      ship.xSpeed-=acceleration;
+function updateUnitDots() {
+  unitDots.clear();
+  gameObjects.forEach(function(object) {
+    var unitMiniX = object.x * renderTexture.resolution;
+    var unitMiniY = object.y * renderTexture.resolution;
+    var objectType = object.objectType;
+    if (objectType == 'unit' || objectType == 'building' || objectType == 'wall') {
+      if (playerColors[object.player - 2] == undefined) {
+        // player 1
+        var color = '0x1331a1';
+      } else {
+        var color = playerColors[object.player - 2].color;
+      }            unitDots.beginFill(color);
+      if (objectType == 'building') {
+        unitDots.drawRect(unitMiniX, unitMiniY, 5, 5);
+      } else {
+        unitDots.drawEllipse(unitMiniX, unitMiniY, 1.5, 1.5);
+      }
+    } else if (objectType == 'plant') {
+      // tree
+      unitDots.beginFill(0x2A4B17);
+      unitDots.drawEllipse(unitMiniX, unitMiniY, 2, 2);
+    } else {
+      var color = '0x666666';
+      // gray
+      unitDots.beginFill(color);
+      unitDots.drawRect(unitMiniX, unitMiniY, 5, 5);
     }
-
-  }
-  else if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.D))
-  {
-    if(ship.xSpeed <= maxSpeed){
-      ship.xSpeed+=acceleration;
-    }
-  } else if(!(Interstellar.input.keyboard.isDown(Phaser.Keyboard.A) && Interstellar.input.keyboard.isDown(Phaser.Keyboard.D))){
-    if(ship.xSpeed<0)
-      ship.xSpeed += slowDown;
-    else
-      ship.xSpeed -= slowDown;
-  }
-
-  if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.W))
-  {
-    if(ship.ySpeed >= 0-maxSpeed){
-      ship.ySpeed-=acceleration;
-    }
-  }
-  else if (Interstellar.input.keyboard.isDown(Phaser.Keyboard.S))
-  {
-    if(ship.ySpeed <= maxSpeed){
-      ship.ySpeed+=acceleration;
-    }
-  } else if(!(Interstellar.input.keyboard.isDown(Phaser.Keyboard.W) && Interstellar.input.keyboard.isDown(Phaser.Keyboard.S))){
-    if(ship.ySpeed<0)
-      ship.ySpeed += slowDown;
-    else
-      ship.ySpeed -= slowDown;
-  }
-  ship.x += ship.xSpeed;
-  ship.y += ship.ySpeed;
+  });
 }
+*/
