@@ -110,6 +110,7 @@ function create() {
     // Interstellar.physics.startSystem(Phaser.Physics.P2JS);
     Interstellar.playersX = [];
     Interstellar.playersY = [];
+    Interstellar.players = [];
     Interstellar.addNewPlayer = (id, username, x, y) => {
       if(username === Interstellar.playerUsername){
         Interstellar.playerId = id;
@@ -129,11 +130,11 @@ function create() {
     };
 
     Interstellar.movePlayer = (id, x, y) => {
-      if(Interstellar.players){
+      // if(Interstellar.players){
         // console.log(Interstellar.players);
         Interstellar.playersX[id] = x;
         Interstellar.playersY[id] = y;
-      }
+      // }
     };
 
 
@@ -157,10 +158,6 @@ function create() {
     createPlanets();
     createClient();
     Client.askNewPlayer();
-    Interstellar.playerUpdater = setInterval(()=>{
-      // console.log("Sending");
-      Client.sendCoord();
-    }, 80);
 
 }
 
@@ -214,7 +211,7 @@ function update() {
       }
     });
 
-    fighters.forEachAlive((item)=> {
+    fighters.forEach((item)=> {
         if(item.id !== Interstellar.playerId){
           let ship = item.getChildAt(0);
           ship.x = Interstellar.playersX[item.id];

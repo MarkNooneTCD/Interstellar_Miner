@@ -1,6 +1,7 @@
 var Client = {};
 function createClient(){
-  Client.socket = io.connect('http://138.68.131.76');
+  // Client.socket = io.connect('http://138.68.131.76');
+  Client.socket = io.connect();
 
   Client.askNewPlayer = function(){
       let username = getParameterByName('username');
@@ -9,7 +10,7 @@ function createClient(){
   };
 
   Client.socket.on('newplayer',function(data){
-      console.log("New Player Data: "+data.id+" "+data.username);
+      console.log("New Player Data: "+data.id+" "+data.username+" "+data.x+" "+data.y);
       Interstellar.addNewPlayer(data.id,data.x,data.y);
   });
 
@@ -18,12 +19,13 @@ function createClient(){
   });
 
   Client.sendCoord = (x, y) => {
-    Client.socket.emit('coord',{x:x,y:y});
+    // console.log("Coording: "+x+" "+y);
+    Client.socket.emit('coord',{dataX:x,dataY:y});
   };
 
   Client.socket.on('allplayers',function(data){
       for(var i = 0; i < data.length; i++){
-        console.log("All Player Data: "+data[i].id+" "+data[i].username);
+        console.log("All Player Data: "+data[i].id+" "+data[i].username+" "+data[i].x+" "+data[i].y);
           Interstellar.addNewPlayer(data[i].id, data[i].username, data[i].x, data[i].y);
       }
   });
@@ -33,7 +35,7 @@ function createClient(){
   };
 
   Client.socket.on('move',function(data){
-    console.log("moving");
+    console.log("Moving: "+data.id+" "+data.username+" "+data.x+" "+data.y);
        Interstellar.movePlayer(data.id, data.x, data.y);
   });
 }
